@@ -9,6 +9,7 @@ import { Report } from './pages/Report'
 import { useBranches } from './hooks/useBranches'
 import { useSession } from './hooks/useSession'
 import { UpdateBanner } from './components/UpdateBanner'
+import DesktopSidebar from './components/DesktopSidebar'
 
 const HUB = 'https://truescale-group.github.io/mixue-ice-sakon/'
 
@@ -127,6 +128,10 @@ export default function App() {
   return (
     <div className={'app-shell' + (canEdit ? '' : ' viewer')}>
       <UpdateBanner show={updateReady} onReload={applyUpdate} />
+
+      {/* ── Desktop sidebar (โชว์เฉพาะ PC ≥900px via CSS) ── */}
+      <DesktopSidebar tab={tab} onChange={setTab} branches={branches} branchId={branchId}
+        onBranch={selectBranch} canEdit={canEdit} onEntry={() => setShowEntry(true)} />
       {/* ── AppBar (concept เดียวกับ Inventory) ── */}
       <header className="app-topbar">
         <button className="app-back-btn" onClick={goHome}>🏠 Home</button>
