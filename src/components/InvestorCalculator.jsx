@@ -55,6 +55,7 @@ export function InvestorCalculator({ defaultProfit = 0, branchId = 'default' }) 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
         {!showNameInput ? (
           <button
+            className="scn-save"
             onClick={() => setShowNameInput(true)}
             style={{
               alignSelf: 'flex-start', background: 'var(--red)', color: '#fff', border: 'none',

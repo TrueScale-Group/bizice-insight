@@ -353,6 +353,15 @@ html, body, #root {
   padding: 11px; border-radius: 10px; font-family: 'Prompt'; font-weight: 600; font-size: 14px; margin-top: 4px;
 }
 .btn-save:active { background: var(--red-d); }
+
+/* ── Viewer (ดูอย่างเดียว) — ซ่อนปุ่มบันทึก/แก้ไขทั้งหมด ── */
+.app-shell.viewer .btn-save,
+.app-shell.viewer .scn-save { display: none !important; }
+.view-badge {
+  display: inline-block; margin-left: 6px; font-family: 'Sarabun'; font-weight: 600;
+  font-size: 9px; color: var(--orange); background: var(--orange-bg);
+  border: 1px solid var(--orange-b, #FED7AA); border-radius: 20px; padding: 1px 6px; vertical-align: middle;
+}
 .toast-ok {
   background: var(--green); color: #fff; text-align: center; padding: 9px;
   border-radius: 10px; font-size: 13px; font-weight: 500;

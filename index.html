@@ -83,14 +83,15 @@
           window.location.replace(HUB);
           return;
         }
-        // ⚠️ OWNER-ONLY: ไม่ใช่ owner เด้งกลับ Hub ทันที
-        if (s.role !== 'owner') { window.location.replace(HUB); return; }
+        // สิทธิ์ตามระบบ Hub: owner/admin = เต็ม · staff ตาม apps['insight'] · 'none' = บล็อก
+        var _isAdmin = s.role === 'owner' || s.role === 'admin';
+        if (!_isAdmin && s.apps && s.apps['insight'] === 'none') { window.location.replace(HUB); return; }
 
         // sliding expiry — ต่ออายุทุกครั้งที่เปิด
         s.expiry = Date.now() + TTL;
         try { localStorage.setItem('bizice_session', JSON.stringify(s)); } catch (e) {}
         window._bizSession = s;
-        window._bizMode = params.get('mode') || s.role || 'owner';
+        window._bizMode = params.get('mode') || (_isAdmin ? 'editor' : ((s.apps && s.apps['insight']) || 'viewer'));
       } catch (e) { window.location.replace(HUB); }
     })();
   </script>

@@ -7,6 +7,7 @@ import { DataEntry } from './pages/DataEntry'
 import { RoiRoe } from './pages/RoiRoe'
 import { Report } from './pages/Report'
 import { useBranches } from './hooks/useBranches'
+import { useSession } from './hooks/useSession'
 import { UpdateBanner } from './components/UpdateBanner'
 
 const HUB = 'https://truescale-group.github.io/mixue-ice-sakon/'
@@ -43,6 +44,8 @@ export default function App() {
   const [exitHint, setExitHint] = useState(false)
   const [updateReady, setUpdateReady] = useState(false)
   const waitingSW = useRef(null)
+  const { isEditor } = useSession()
+  const canEdit = isEditor()
   const { branches } = useBranches()
   const [branchId, setBranchId] = useState(() => localStorage.getItem('insight_branch') || 'default')
   // ถ้า branch ที่เลือกไว้หายไป (เช่นถูกลบ) → fallback ไปสาขาแรก
@@ -109,8 +112,9 @@ export default function App() {
     setTimeout(() => window.location.reload(), 300)
   }
 
-  // long-press ปุ่มกลาง = เมนูกรอกข้อมูลรวม
+  // long-press ปุ่มกลาง = เมนูกรอกข้อมูลรวม (เฉพาะคนแก้ได้)
   const startPress = () => {
+    if (!canEdit) return
     pressTimer.current = setTimeout(() => {
       pressTimer.current = null
       setShowEntry(true)
@@ -121,7 +125,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={'app-shell' + (canEdit ? '' : ' viewer')}>
       <UpdateBanner show={updateReady} onReload={applyUpdate} />
       {/* ── AppBar (concept เดียวกับ Inventory) ── */}
       <header className="app-topbar">
@@ -130,7 +134,7 @@ export default function App() {
           <div className="app-brand-icon">
             <img src="./icon-insight.png" alt="Insight" />
           </div>
-          <div className="app-brand-name">Mixue Insight</div>
+          <div className="app-brand-name">Mixue Insight{!canEdit && <span className="view-badge">👁 ดูอย่างเดียว</span>}</div>
           <select
             className="app-brand-sub"
             value={branchId}
