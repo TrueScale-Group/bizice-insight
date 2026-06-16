@@ -1,0 +1,464 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --red: #E31E24;
+  --red-d: #B01519;
+  --red-tint: #FFF5F5;   /* แดงจางมาก — พื้น minimal */
+  --gold: #D4A017;
+  --bg: #F7F7FA;         /* เทาอ่อนแบบ iOS systemGray6 */
+  --surf: #FFFFFF;
+  --border: rgba(60,60,67,0.08);   /* iOS hairline */
+  --txt: #1C1C1E;        /* iOS label */
+  --txt2: #3C3C43;
+  --txt3: #8E8E93;       /* iOS secondaryLabel */
+  --green: #1A7F37;
+  --green-bg: #F0FDF4;
+  --orange: #C2410C;
+  --orange-bg: #FFF7ED;
+  --r: 12px;
+  --rl: 16px;
+  /* เงา iOS: นุ่ม ฟุ้งน้อย */
+  --sh: 0 1px 2px rgba(0,0,0,0.04);
+  --sh-md: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  height: 100dvh;
+  background: var(--bg);
+  font-family: 'Sarabun', sans-serif;
+  color: var(--txt);
+  overflow: hidden;
+}
+
+/* ── App shell ── */
+.app-shell { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+.ptr-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; min-height: 0; }
+
+/* ── AppBar (concept เดียวกับ Inventory) ── */
+.app-topbar {
+  background: #fff; border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.05);
+  padding: env(safe-area-inset-top) .85rem 0;
+  height: calc(56px + env(safe-area-inset-top));
+  box-sizing: border-box; display: flex; align-items: center; gap: 10px;
+}
+.app-back-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 13px 6px 11px; border-radius: 20px;
+  background: var(--red); border: none; cursor: pointer;
+  font-size: 12.5px; font-weight: 700; color: #fff; font-family: 'Prompt', sans-serif;
+  flex-shrink: 0;
+}
+.app-back-btn:active { transform: scale(0.93); }
+.app-brand { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.app-brand-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #FFF0F0, #FFE0E0);
+  border: 2px solid rgba(227,30,36,.18); box-shadow: 0 2px 8px rgba(0,0,0,.10);
+  display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+  overflow: hidden;
+}
+.app-brand-icon img { width: 100%; height: 100%; object-fit: cover; }
+.app-brand-name {
+  font-family: 'Prompt', sans-serif; font-size: 14px; font-weight: 700; color: var(--txt);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
+}
+.app-brand-sub { font-size: 10.5px; color: var(--txt3); font-weight: 500; margin-top: 1px; white-space: nowrap; }
+.app-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.topbar-refresh-btn {
+  width: 32px; height: 32px; border-radius: 50%; background: none; border: none; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--txt2);
+}
+.topbar-refresh-btn:active { transform: scale(0.88); }
+
+/* ── Connection pill ── */
+.conn-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
+}
+.conn-pill.online  { background: var(--green-bg); color: var(--green); }
+.conn-pill.offline { background: #FEE2E2; color: #DC2626; }
+.conn-pill.syncing { background: var(--orange-bg); color: var(--orange); }
+.conn-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.conn-dot.online  { background: var(--green); box-shadow: 0 0 0 2px rgba(26,127,55,0.25); }
+.conn-dot.offline { background: #DC2626; }
+.conn-dot.syncing { background: #D97706; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── Page / Card ── */
+.page { padding: 14px 14px 90px; display: flex; flex-direction: column; gap: 12px; }
+.card { background: var(--surf); border-radius: var(--rl); box-shadow: var(--sh); padding: 16px; }
+.card.hero { padding: 12px 14px; }
+.card-label { font-size: 12px; color: var(--txt3); font-weight: 600; margin-bottom: 4px; text-align: center; }
+.hero-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.hero-2col { display: flex; align-items: center; gap: 10px; }
+.hero-left { flex: 0 0 46%; display: flex; justify-content: center; }
+.hero-div { width: 1px; align-self: stretch; background: var(--border); margin: 4px 0; }
+.hero-right { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.hero-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; align-self: flex-start; }
+.hero-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--txt2); border-bottom: 1px dashed var(--border); padding-bottom: 5px; }
+.hero-stat:last-child { border-bottom: none; }
+.hero-stat b { font-family: 'Prompt'; font-size: 15px; white-space: nowrap; }
+.hero-meta { text-align: center; font-size: 12px; color: var(--txt2); margin-top: 6px; }
+.loss-banner {
+  margin-top: 10px; font-size: 12px; font-weight: 600; color: #B42318;
+  background: #FEE4E2; border: 1px solid #FECDCA; border-radius: 10px; padding: 9px 11px; text-align: center;
+}
+.bep-more-btn {
+  width: 100%; margin-top: 10px; border: 1px solid var(--border); background: var(--bg);
+  color: var(--txt2); border-radius: 10px; padding: 9px; font-family: 'Prompt'; font-weight: 600;
+  font-size: 12.5px; cursor: pointer;
+}
+.bep-more-btn:active { background: #E6E6EB; }
+/* BEP 5 มิติ ใน popup */
+.bep-dim { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.bep-dim:last-child { border-bottom: none; }
+.bep-dim-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 13.5px; font-weight: 600; }
+.bep-dim-h b { font-family: 'Prompt'; font-size: 15px; white-space: nowrap; }
+.bep-dim-note { font-size: 11.5px; color: var(--txt3); margin-top: 3px; }
+.hero-hint {
+  margin-top: 10px; font-size: 11px; color: var(--orange);
+  background: var(--orange-bg); border-radius: 10px; padding: 8px 10px; text-align: center;
+}
+.loading { padding: 60px 20px; text-align: center; color: var(--txt3); }
+
+/* ── Segmented toggle ── */
+.seg { display: flex; background: #E6E6EB; border-radius: 10px; padding: 3px; gap: 3px; }
+.seg-btn {
+  flex: 1; border: none; background: transparent; padding: 7px; border-radius: 8px;
+  font-family: 'Prompt'; font-size: 13px; color: var(--txt2); cursor: pointer; font-weight: 500;
+}
+.seg-btn.active { background: var(--surf); color: var(--red); box-shadow: var(--sh); font-weight: 600; }
+
+/* ── Group box (กรอบแต่ละชุดข้อมูล) ── */
+.grp-box {
+  border: 1.5px solid var(--border);
+  border-radius: var(--rl);
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: #fff;
+}
+.grp-box .grp-head { margin-top: 0; }
+
+/* ── Group header ── */
+.grp-head {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'Prompt'; font-weight: 600; font-size: 13px; color: var(--txt2);
+  margin-top: 4px;
+}
+.grp-bar { width: 4px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+.mini-seg {
+  margin-left: auto; display: flex; background: #fff;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.mini-seg button {
+  border: none; background: none; font-family: 'Prompt'; font-size: 10px; font-weight: 600;
+  color: var(--txt3); padding: 4px 10px; cursor: pointer; transition: background .15s;
+}
+.mini-seg button.on { background: var(--red); color: #fff; }
+.grp-tag {
+  font-size: 9.5px; font-weight: 500; color: var(--orange);
+  background: var(--orange-bg); padding: 2px 8px; border-radius: 20px; margin-left: auto;
+}
+
+/* ── KPI grid ── */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kpi-card {
+  background: var(--surf); border-radius: var(--r); box-shadow: var(--sh);
+  padding: 12px; display: flex; flex-direction: column; gap: 3px;
+}
+.kpi-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.kpi-title { font-size: 11.5px; color: var(--txt2); font-weight: 500; line-height: 1.2; }
+.kpi-value { font-family: 'Prompt'; font-weight: 700; font-size: 19px; margin-top: 2px; }
+.kpi-sub { font-size: 10.5px; color: var(--txt3); }
+.kpi-pending { font-size: 11px; color: var(--txt3); font-style: italic; margin-top: 6px; }
+
+/* ── Bottom nav (สไตล์ Daily Income) ── */
+.bottom-nav {
+  position: relative; display: flex; align-items: center;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  padding: .3rem 0 calc(.3rem + env(safe-area-inset-bottom));
+  box-shadow: 0 -1px 0 rgba(0,0,0,.06), 0 -4px 16px rgba(0,0,0,.04);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: .25rem; cursor: pointer; border: none; background: none; transition: transform .15s;
+  font-family: 'Sarabun', sans-serif;
+}
+.nav-item:active { transform: scale(.88); }
+.nav-pill {
+  display: flex; align-items: center; justify-content: center; width: 46px; height: 30px; border-radius: 15px;
+  transition: background .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
+}
+.nav-item.active .nav-pill { background: rgba(227,30,36,.10); transform: scale(1.05); }
+.nav-icon { font-size: 21px; line-height: 1; transition: transform .2s cubic-bezier(.34,1.56,.64,1); }
+.nav-item.active .nav-icon { transform: scale(1.12); }
+.nav-label { font-size: 9.5px; font-weight: 500; color: var(--txt3); transition: color .2s, font-weight .2s; }
+.nav-item.active .nav-label { color: var(--red); font-weight: 700; }
+/* center FAB (รายงาน) — ยกขึ้น + กระพริบ */
+.nav-item.is-hub { position: relative; }
+.nav-hub-fab {
+  position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #FEE2E6; color: var(--red); border: 3px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 10px rgba(227,30,36,.15); z-index: 5;
+}
+.nav-hub-fab .hub-emoji { font-size: 25px; line-height: 1; }
+.nav-hub-fab.active { background: var(--red); color: #fff; }
+.nav-hub-fab.pending { animation: hubPulse 1.8s ease-in-out infinite; }
+.nav-hub-fab:active { transform: translateX(-50%) scale(.92); }
+.nav-item.is-hub .nav-label { margin-top: 36px; font-weight: 800; color: var(--red); }
+@keyframes hubPulse {
+  0%,100% { box-shadow: 0 4px 14px rgba(227,30,36,.42), 0 0 0 0 rgba(227,30,36,.55); }
+  70%     { box-shadow: 0 4px 14px rgba(227,30,36,.42), 0 0 0 14px rgba(227,30,36,0); }
+}
+@media (prefers-reduced-motion: reduce) { .nav-hub-fab.pending { animation: none; } }
+
+/* ── Update banner (SW update prompt) ── */
+.update-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9000;
+  background: linear-gradient(90deg, #0F766E, #0D9488); color: #fff;
+  padding: calc(env(safe-area-inset-top) + 8px) 14px 10px;
+  display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600;
+  transform: translateY(-110%); transition: transform .3s ease; box-shadow: 0 2px 12px rgba(0,0,0,.2);
+}
+.update-banner.show { transform: translateY(0); }
+.update-banner .ub-text { flex: 1; }
+.update-banner .ub-btn {
+  background: rgba(255,255,255,.2); border: 1.5px solid rgba(255,255,255,.45); color: #fff;
+  border-radius: 8px; padding: 5px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.update-banner .ub-btn:active { background: rgba(255,255,255,.35); }
+
+/* ── Exit hint toast ── */
+.exit-hint {
+  position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  z-index: 9999; background: rgba(17,24,39,.92); color: #fff; padding: 9px 16px; border-radius: 20px;
+  font-size: 12.5px; font-weight: 600; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
+
+/* ── KPI source chip ── */
+.kpi-src { font-size: 9.5px; color: var(--txt3); margin-top: 4px; opacity: .85; }
+
+/* ── Bottom-sheet Modal ── */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.4);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; padding-bottom: calc(86px + env(safe-area-inset-bottom)); /* เหนือ bottom bar */
+  animation: fadeIn .15s ease;
+}
+.sheet {
+  width: 100%; max-width: 440px;
+  max-height: calc(100dvh - 130px - env(safe-area-inset-bottom)); /* พอดีระหว่าง topbar กับ bottom bar */
+  display: flex; flex-direction: column; overflow: hidden;   /* มุมโค้งคลิปสะอาด */
+  background: var(--surf); border-radius: 22px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.22);
+  animation: pop .2s cubic-bezier(.16,1,.3,1);
+}
+.sheet-head {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  padding: 14px 16px 11px; border-bottom: 1px solid var(--border);
+  background: var(--surf); box-shadow: 0 2px 6px rgba(0,0,0,.04); z-index: 1;
+}
+.sheet-title { font-family: 'Prompt'; font-weight: 700; font-size: 16px; flex: 1; }
+.sheet-close {
+  border: 1.5px solid #FCA5A5; background: #FEE2E2; color: #DC2626;
+  width: 30px; height: 30px; border-radius: 50%; font-size: 16px; font-weight: 800; cursor: pointer;
+  line-height: 1; -webkit-appearance: none; flex-shrink: 0;
+  font-family: -apple-system, system-ui, 'Segoe UI Symbol', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+}
+@keyframes xBounce {
+  0%   { transform: scale(1)    rotate(0deg); }
+  20%  { transform: scale(1.35) rotate(-12deg); }
+  40%  { transform: scale(1.25) rotate(10deg); }
+  60%  { transform: scale(1.15) rotate(-6deg); }
+  80%  { transform: scale(1.05) rotate(3deg); }
+  100% { transform: scale(1)    rotate(0deg); }
+}
+.sheet-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 18px; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+
+/* ── Detail content ── */
+.dt-hero { text-align: center; padding: 6px 0 4px; }
+.dt-status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 11px; border-radius: 20px; }
+.dt-value { font-family: 'Prompt'; font-weight: 700; font-size: 34px; line-height: 1.1; margin-top: 6px; }
+.dt-sub { font-size: 12px; color: var(--txt3); }
+.dt-section { display: flex; flex-direction: column; gap: 5px; }
+.dt-label { font-size: 11px; font-weight: 700; color: var(--txt3); letter-spacing: .02em; }
+.dt-src { font-size: 13px; color: var(--txt); background: #EFF6FF; padding: 8px 11px; border-radius: 9px; }
+.dt-formula { font-size: 12.5px; color: var(--txt2); background: var(--bg); padding: 10px 12px; border-radius: 9px; line-height: 1.5; }
+.dt-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 7px 2px; border-bottom: 1px solid var(--border); }
+.dt-row:last-child { border-bottom: none; }
+.dt-row b { font-family: 'Prompt'; white-space: nowrap; }
+.dt-legend { font-size: 13px; color: var(--txt2); background: var(--bg); padding: 9px 12px; border-radius: 9px; }
+
+/* ── Accordion ── */
+.acc { background: var(--surf); border-radius: var(--r); box-shadow: var(--sh); overflow: hidden; }
+.acc-head {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 14px;
+  border: none; background: none; cursor: pointer; text-align: left;
+}
+.acc-icon { font-size: 18px; }
+.acc-title { font-family: 'Prompt'; font-weight: 600; font-size: 14px; flex: 1; }
+.acc-badge { font-family: 'Prompt'; font-weight: 700; font-size: 13px; color: var(--red); }
+.acc-chev { color: #C7C7CC; font-size: 11px; }
+.acc-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.acc-note { font-size: 11.5px; color: var(--txt2); line-height: 1.5; background: var(--bg); padding: 9px 11px; border-radius: 9px; }
+.grp { font-family: 'Prompt'; font-weight: 600; font-size: 12px; color: var(--txt3); margin-top: 6px; }
+
+/* ── Settings (สไตล์ Inventory) ── */
+.set-subbar { font-family: 'Prompt'; font-weight: 700; font-size: 20px; padding: 2px 2px 4px; }
+.set-card { background: var(--surf); border-radius: var(--rl); box-shadow: var(--sh); overflow: hidden; }
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-row:active { background: var(--bg); }
+.setting-left { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.setting-icon { font-size: 19px; flex-shrink: 0; }
+.setting-title { font-family: 'Prompt'; font-size: 15px; font-weight: 600; color: var(--txt); }
+.setting-right-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.setting-desc { font-size: 11.5px; color: var(--txt3); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.setting-arrow { color: #C7C7CC; font-size: 18px; }
+.set-footer { padding: 24px 1rem 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.set-foot-name { font-size: 12px; color: var(--txt3); font-weight: 600; }
+.set-foot-ver { font-size: 11px; color: var(--txt3); display: flex; align-items: center; gap: 6px; }
+.set-ver-pill { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; font-weight: 700; font-size: 10.5px; color: var(--txt2); }
+
+/* ── Form field ── */
+.fld { display: flex; flex-direction: column; gap: 4px; }
+.fld-label { font-size: 12.5px; color: var(--txt2); font-weight: 500; }
+.fld-hint { color: var(--txt3); font-weight: 400; font-size: 11px; }
+.fld-input { display: flex; align-items: center; background: var(--bg); border-radius: 9px; padding: 0 10px; border: 1px solid transparent; }
+.fld-input:focus-within { border-color: var(--red); background: #fff; }
+.fld-input input {
+  flex: 1; border: none; background: none; outline: none; padding: 9px 0;
+  font-family: 'Prompt'; font-size: 15px; color: var(--txt); min-width: 0;
+}
+.fld-unit { color: var(--txt3); font-size: 12px; margin-left: 6px; }
+.hint-row { font-size: 11.5px; color: var(--txt2); background: var(--green-bg); padding: 8px 10px; border-radius: 8px; }
+
+.btn-save {
+  width: 100%; border: none; background: var(--red); color: #fff; cursor: pointer;
+  padding: 11px; border-radius: 10px; font-family: 'Prompt'; font-weight: 600; font-size: 14px; margin-top: 4px;
+}
+.btn-save:active { background: var(--red-d); }
+.toast-ok {
+  background: var(--green); color: #fff; text-align: center; padding: 9px;
+  border-radius: 10px; font-size: 13px; font-weight: 500;
+}
+.phase-note {
+  font-size: 11.5px; color: var(--orange); background: var(--orange-bg);
+  padding: 9px 11px; border-radius: 10px; text-align: center;
+}
+
+/* ── Overlay (DataEntry) ── */
+.overlay {
+  position: fixed; inset: 0; z-index: 50; background: var(--bg);
+  display: flex; flex-direction: column;
+}
+
+/* ── Calendar ── */
+.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+.cal-head-mid { display: flex; align-items: center; gap: 8px; }
+.cal-nav { border: none; background: var(--surf); box-shadow: var(--sh); width: 34px; height: 34px; border-radius: 50%; font-size: 20px; cursor: pointer; color: var(--txt); }
+.cal-title { font-family: 'Prompt'; font-weight: 600; font-size: 16px; }
+.cal-today-btn {
+  border: none; background: #E3EEFF; color: #1D4ED8; font-family: 'Prompt'; font-weight: 600;
+  font-size: 11px; padding: 4px 11px; border-radius: 20px; cursor: pointer;
+}
+.cal-today-btn:disabled { opacity: .4; cursor: default; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-wd { margin-bottom: 6px; }
+.cal-wd-cell { text-align: center; font-size: 10px; color: var(--txt3); font-weight: 600; }
+.cal-cell {
+  aspect-ratio: 1; border: none; background: var(--bg); border-radius: 8px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 2px;
+}
+.cal-cell.empty { background: transparent; }
+.cal-cell.hit  { background: #E7F6EC; }
+.cal-cell.miss { background: #FDECEC; }
+.cal-cell.sel  { outline: 2px solid var(--red); }
+/* วันนี้ = พื้นฟ้า (iOS systemBlue tint) */
+.cal-cell.today { background: #E3EEFF; }
+.cal-cell.today .cal-d { color: #1D4ED8; font-weight: 700; }
+.cal-d { font-family: 'Prompt'; font-weight: 600; font-size: 12px; }
+.cal-mark { font-size: 9px; line-height: 1; }
+.cal-cell.hit .cal-mark { color: var(--green); }
+.cal-rev { font-size: 8px; color: var(--txt3); }
+.cal-legend { display: flex; gap: 16px; justify-content: center; margin-top: 10px; font-size: 11px; color: var(--txt2); }
+.cal-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+.dot-green { background: var(--green); }
+.dot-red { background: #E24B4A; }
+
+/* ── ROI / ROE ── */
+.roi-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.roi-main { display: flex; flex-direction: column; }
+.roi-big { font-family: 'Prompt'; font-weight: 700; font-size: 38px; line-height: 1; }
+.roi-cap { font-size: 12px; color: var(--txt3); }
+.roi-payback { text-align: center; padding: 10px 14px; border-radius: 12px; font-size: 12px; line-height: 1.4; font-family: 'Prompt'; }
+.roi-row { display: flex; gap: 10px; margin-top: 12px; }
+.roi-row > div { flex: 1; display: flex; flex-direction: column; gap: 2px; background: var(--bg); border-radius: 10px; padding: 9px 11px; }
+.roi-row span { font-size: 11px; color: var(--txt3); }
+.roi-row b { font-family: 'Prompt'; font-size: 16px; }
+.roi-note { font-size: 10.5px; color: var(--txt3); margin-top: 10px; text-align: center; }
+
+/* ── Investor model card ── */
+.model-card { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.model-head { font-family: 'Prompt'; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.tag { font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-left: auto; }
+.tag-ok { background: var(--green-bg); color: var(--green); }
+.tag-eq { background: #EFF6FF; color: #1D4ED8; }
+.model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.model-col { font-size: 11.5px; color: var(--txt2); display: flex; flex-direction: column; gap: 2px; }
+.model-col-h { font-family: 'Prompt'; font-weight: 600; font-size: 11px; color: var(--txt); margin-bottom: 2px; }
+.model-col b { font-family: 'Prompt'; }
+.model-sum { font-size: 10px; color: var(--txt3); margin-top: 2px; }
+
+/* ── Report ── */
+.rep-title { font-family: 'Prompt'; font-weight: 600; font-size: 16px; }
+.rep-section { font-family: 'Prompt'; font-weight: 600; font-size: 13px; color: var(--txt2); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+.rep-tag { font-size: 9.5px; font-weight: 500; color: var(--orange); background: var(--orange-bg); padding: 2px 8px; border-radius: 20px; }
+.rep-note { font-size: 10.5px; color: var(--txt3); line-height: 1.6; background: var(--bg); padding: 10px 12px; border-radius: 10px; margin-top: 6px; }
+
+/* ── Day detail ── */
+.day-detail { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.dr { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.dr:last-child { border-bottom: none; }
+.dr-l { color: var(--txt2); }
+.dr-v { font-family: 'Prompt'; }
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE — มือถือ (default) · Tablet · PC
+   มือถือ iOS/Android: ใช้ safe-area + native feel (index.html) อยู่แล้ว
+   Tablet/PC: จัดแอพเป็นคอลัมน์กลางจอ (ไม่ยืดเต็มจนเสียทรง)
+   ════════════════════════════════════════════════ */
+@media (min-width: 560px) {
+  html, body, #root { background: #E4E4EA; }
+  .app-shell {
+    max-width: 620px; margin: 0 auto; background: var(--bg);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.04), 0 10px 50px rgba(0,0,0,.12);
+  }
+  /* การ์ดดัชนีโปร่งขึ้นนิดบนจอใหญ่ */
+  .page { padding: 16px 16px 96px; }
+}
+
+/* PC: กว้างขึ้นเล็กน้อย (คง 2 คอลัมน์ให้สมดุล) */
+@media (min-width: 1000px) {
+  .app-shell { max-width: 700px; }
+}
+
+/* จอเตี้ย (มือถือแนวนอน) — ลดความสูง popup ลงอีก */
+@media (max-height: 560px) {
+  .sheet { max-height: calc(100dvh - 90px); }
+}

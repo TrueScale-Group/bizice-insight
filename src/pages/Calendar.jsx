@@ -1,0 +1,134 @@
+import { useEffect, useState } from 'react'
+import { db } from '../firebase'
+import { doc, getDoc } from 'firebase/firestore'
+import { COL } from '../constants/collections'
+import { getGrossRange, getCOGSRange } from '../utils/integrations'
+import {
+  DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, thb, pctStr,
+} from '../utils/calc'
+import { toThaiMonth, toThaiDate } from '../utils/formatDate'
+
+const WD = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+
+export function Calendar({ branchId = 'default' }) {
+  const today = new Date()
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const [ym, setYm] = useState({ y: today.getFullYear(), m: today.getMonth() }) // m: 0-11
+  const [days, setDays] = useState({})   // dateKey → { net, cogs, fcPct, gp, bep, hit }
+  const [loading, setLoading] = useState(true)
+  const [sel, setSel] = useState(todayKey)   // เริ่มต้นเลือก "วันนี้"
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    const mm = String(ym.m + 1).padStart(2, '0')
+    const from = `${ym.y}-${mm}-01`, to = `${ym.y}-${mm}-31`
+    ;(async () => {
+      const mk = `${ym.y}${mm}`
+      const [cSnap, mSnap] = await Promise.all([
+        getDoc(doc(db, COL.CONFIG, branchId)),
+        getDoc(doc(db, COL.MONTHLY_DATA, `${branchId}_${mk}`)),
+      ])
+      const cfg = { ...DEFAULT_CONFIG, ...(cSnap.exists() ? cSnap.data() : {}) }
+      const labor = mSnap.exists() ? laborTotal(mSnap.data().labor || {}, 5) : 0
+      const [gross, cogs] = await Promise.all([
+        getGrossRange(from, to),
+        getCOGSRange(from, to, branchId && branchId !== 'default' ? branchId : 'all'),
+      ])
+      if (!alive) return
+      const fixedMonthly = (cfg.rentCost || 0) + (cfg.annualFeeYearly || 0) / 12 + labor
+      // food cost เฉลี่ยทั้งเดือน → ใช้คิด BEP/วัน
+      const totCogs = Object.values(cogs).reduce((s, v) => s + v, 0)
+      const totNet = Object.keys(gross).reduce((s, k) => s + netRevenue(gross[k], cfg.vatRate), 0)
+      const avgFc = totNet > 0 ? (totCogs / totNet) * 100 : 0
+      const bep = bepDaily(fixedMonthly, avgFc, cfg.openDays)
+      const map = {}
+      const allKeys = new Set([...Object.keys(gross), ...Object.keys(cogs)])
+      allKeys.forEach(k => {
+        const net = netRevenue(gross[k] || 0, cfg.vatRate)
+        const cg = cogs[k] || 0
+        map[k] = { net, cogs: cg, fcPct: foodCostPct(cg, net), gp: grossProfit(net, cg), bep, hit: hitBep(net, bep) }
+      })
+      setDays(map); setLoading(false)
+    })()
+    return () => { alive = false }
+  }, [ym, branchId])
+
+  const first = new Date(ym.y, ym.m, 1)
+  const blanks = first.getDay()
+  const daysInMonth = new Date(ym.y, ym.m + 1, 0).getDate()
+  const cells = [...Array(blanks).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
+
+  const keyOf = (d) => `${ym.y}-${String(ym.m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+  const shift = (delta) => setYm(s => {
+    const d = new Date(s.y, s.m + delta, 1); return { y: d.getFullYear(), m: d.getMonth() }
+  })
+  const jumpToday = () => { setYm({ y: today.getFullYear(), m: today.getMonth() }); setSel(todayKey) }
+  const onCurrentMonth = ym.y === today.getFullYear() && ym.m === today.getMonth()
+
+  return (
+    <div className="page">
+      <div className="cal-head">
+        <button className="cal-nav" onClick={() => shift(-1)}>‹</button>
+        <div className="cal-head-mid">
+          <span className="cal-title">{toThaiMonth(`${ym.y}-${String(ym.m + 1).padStart(2, '0')}-01`)}</span>
+          <button className="cal-today-btn" onClick={jumpToday} disabled={onCurrentMonth}>วันนี้</button>
+        </div>
+        <button className="cal-nav" onClick={() => shift(1)}>›</button>
+      </div>
+
+      <div className="card" style={{ padding: 10 }}>
+        <div className="cal-grid cal-wd">{WD.map(w => <div key={w} className="cal-wd-cell">{w}</div>)}</div>
+        {loading ? <div className="loading" style={{ padding: 30 }}>กำลังโหลด…</div> : (
+          <div className="cal-grid">
+            {cells.map((d, i) => {
+              if (!d) return <div key={i} className="cal-cell empty" />
+              const dk = keyOf(d)
+              const data = days[dk]
+              const hasBep = data && data.bep > 0
+              const cls = hasBep ? (data.hit ? 'hit' : 'miss') : ''
+              const isToday = dk === todayKey
+              return (
+                <button key={i} className={`cal-cell ${cls} ${sel === dk ? 'sel' : ''} ${isToday ? 'today' : ''}`}
+                  onClick={() => data && setSel(dk)}>
+                  <span className="cal-d">{d}</span>
+                  {data && <span className="cal-mark">{hasBep ? (data.hit ? '✓' : '✗') : '·'}</span>}
+                  {data && <span className="cal-rev">{Math.round(data.net / 1000)}k</span>}
+                </button>
+              )
+            })}
+          </div>
+        )}
+        <div className="cal-legend">
+          <span><i className="dot-green" /> ทะลุ BEP</span>
+          <span><i className="dot-red" /> ไม่ทะลุ</span>
+        </div>
+      </div>
+
+      {sel && days[sel] && (
+        <div className="card">
+          <div className="card-label" style={{ textAlign: 'left' }}>
+            {toThaiDate(sel)}{sel === todayKey && <span style={{ color: 'var(--red)', fontWeight: 700 }}> · วันนี้</span>}
+          </div>
+          <div className="day-detail">
+            <Row label="ยอดขายสุทธิ" value={thb(days[sel].net)} />
+            <Row label="ต้นทุนวัตถุดิบ" value={thb(days[sel].cogs)} />
+            <Row label="กำไรขั้นต้น" value={thb(days[sel].gp)} strong />
+            <Row label="Food Cost %" value={pctStr(days[sel].fcPct)} />
+            <Row label="BEP/วัน" value={thb(days[sel].bep)} />
+            <Row label="สถานะ" value={days[sel].hit ? '✓ ทะลุ BEP' : '✗ ไม่ทะลุ'} color={days[sel].hit ? '#1A7F37' : '#E24B4A'} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Row({ label, value, strong, color }) {
+  return (
+    <div className="dr">
+      <span className="dr-l">{label}</span>
+      <span className="dr-v" style={{ fontWeight: strong ? 700 : 500, color: color || 'inherit' }}>{value}</span>
+    </div>
+  )
+}
