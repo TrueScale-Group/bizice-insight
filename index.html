@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Insight" />
+  <meta name="theme-color" id="meta-theme-color" content="#E31E24" />
+  <link rel="manifest" href="/bizice-insight/manifest.json" />
+  <link rel="icon" type="image/png" href="./icon-insight.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <title>BizICE Insight</title>
+  <style>
+    /* ── Native App Feel ── */
+    *, *::before, *::after {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+           user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input, textarea, [contenteditable] {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+           user-select: text;
+    }
+    html { touch-action: manipulation; -ms-touch-action: manipulation; }
+    html, body {
+      overscroll-behavior: none;
+      overscroll-behavior-y: contain;
+      -webkit-text-size-adjust: 100%;
+      -moz-text-size-adjust: 100%;
+           text-size-adjust: 100%;
+    }
+  </style>
+  <script>
+    // บล็อก pinch-zoom (iOS) + double-tap zoom + haptic + status bar color
+    (function () {
+      ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (ev) {
+        document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false });
+      });
+      document.addEventListener('touchmove', function (e) {
+        if (e.touches && e.touches.length > 1) e.preventDefault();
+      }, { passive: false });
+      window.addEventListener('wheel', function (e) {
+        if (e.ctrlKey) e.preventDefault();
+      }, { passive: false });
+      window.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].indexOf(e.key) !== -1) e.preventDefault();
+      });
+      window.hapticTap = function () { if (navigator.vibrate) navigator.vibrate(10); };
+      document.addEventListener('pointerdown', function (e) {
+        if (e.target.closest('button, [role="button"], .btn, [onclick]')) window.hapticTap();
+      });
+      window.setStatusBarColor = function (color) {
+        var meta = document.getElementById('meta-theme-color');
+        if (meta && color) meta.setAttribute('content', color);
+      };
+    })();
+  </script>
+  <script>
+    // ── Session guard + OWNER-ONLY gate ──
+    // staff/editor/viewer เด้งกลับ Hub — Insight เปิดเฉพาะ role === 'owner'
+    (function () {
+      const HUB = 'https://truescale-group.github.io/mixue-ice-sakon/';
+      const TTL = 30 * 86400000;   // 30 วัน — กัน iOS ITP ลบ storage
+      try {
+        const params = new URLSearchParams(location.search);
+        let s = JSON.parse(localStorage.getItem('bizice_session') || 'null');
+
+        // Fallback: เปิดจาก Hub iframe ผ่าน URL params แต่ไม่มี localStorage (storage partitioning)
+        if ((!s || !s.name) && params.get('user')) {
+          s = {
+            name: decodeURIComponent(params.get('user') || 'ผู้ใช้'),
+            phone: decodeURIComponent(params.get('phone') || ''),
+            role: params.get('mode') === 'owner' ? 'owner' : params.get('mode') === 'editor' ? 'editor' : 'viewer',
+          };
+        }
+
+        if (!s || !s.name) { window.location.replace(HUB); return; }
+        if (s.expiry && Date.now() > s.expiry) {
+          localStorage.removeItem('bizice_session');
+          window.location.replace(HUB);
+          return;
+        }
+        // ⚠️ OWNER-ONLY: ไม่ใช่ owner เด้งกลับ Hub ทันที
+        if (s.role !== 'owner') { window.location.replace(HUB); return; }
+
+        // sliding expiry — ต่ออายุทุกครั้งที่เปิด
+        s.expiry = Date.now() + TTL;
+        try { localStorage.setItem('bizice_session', JSON.stringify(s)); } catch (e) {}
+        window._bizSession = s;
+        window._bizMode = params.get('mode') || s.role || 'owner';
+      } catch (e) { window.location.replace(HUB); }
+    })();
+  </script>
+  <script type="module" crossorigin src="/bizice-insight/assets/index-X6dUf7lf.js"></script>
+  <link rel="stylesheet" crossorigin href="/bizice-insight/assets/index--QuQvvPY.css">
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
