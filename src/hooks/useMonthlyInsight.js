@@ -94,28 +94,29 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
 
       const isCurrentMonth = monthKey === currentMonthKey()
 
-      // ── BEP 5 มิติ ──
+      // ── BEP 5 มิติ — ฐาน gross (ซื้อ+ขายรวม VAT) ──
+      const fcPctBep = grossMonth > 0 ? (cogsMonth / grossMonth) * 100 : 0   // food cost ÷ ยอด gross
       const fixedMonthly = monthRent + num(c.annualFeeYearly) / 12 + labor
-      const bDaily = bepDaily(fixedMonthly, fcPct, monthOpenDays)
-      const bMonthly = bepMonthly(fixedMonthly, fcPct)
-      // daily series ของเดือน (เฉพาะวันมีข้อมูล) เรียงตามวัน
+      const bDaily = bepDaily(fixedMonthly, fcPctBep, monthOpenDays)
+      const bMonthly = bepMonthly(fixedMonthly, fcPctBep)
+      // daily series ของเดือน (เฉพาะวันมีข้อมูล) เรียงตามวัน — เทียบยอด gross
       const dayRows = [...new Set([...Object.keys(gross), ...Object.keys(cogs)])].sort()
-        .map(k => { const net = netRevenue(num(gross[k]), vat); return { k, net, hit: bDaily > 0 && net >= bDaily, hasData: num(gross[k]) > 0 } })
+        .map(k => { const g = num(gross[k]); return { k, net: g, hit: bDaily > 0 && g >= bDaily, hasData: g > 0 } })
         .filter(d => d.hasData)
       const daysData = dayRows.length
       const daysHit = dayRows.filter(d => d.hit).length
       const today = new Date()
       const daysElapsed = isCurrentMonth ? Math.min(today.getDate(), daysInMonth) : daysInMonth
       const bepCumulative = bDaily * daysElapsed
-      const cumDiff = revenueMonthNet - bepCumulative   // + = นำ, − = ตาม
+      const cumDiff = grossMonth - bepCumulative   // + = นำ, − = ตาม (ยอด gross)
       // loss-streak = วันติดต่อกันล่าสุดที่ไม่ทะลุ BEP (มีข้อมูล)
       let streak = 0, shortfall = 0
       for (let i = dayRows.length - 1; i >= 0; i--) {
         if (!dayRows[i].hit) { streak++; shortfall += Math.max(0, bDaily - dayRows[i].net) } else break
       }
-      const monthEndPass = revenueMonthNet >= bMonthly && bMonthly > 0
+      const monthEndPass = grossMonth >= bMonthly && bMonthly > 0
       const bep = {
-        daily: bDaily, monthly: bMonthly, cumulative: bepCumulative, revenueMTD: revenueMonthNet, cumDiff,
+        daily: bDaily, monthly: bMonthly, cumulative: bepCumulative, revenueMTD: grossMonth, cumDiff,
         daysElapsed, daysHit, daysData,
         monthEndPass, monthEndStatus: isCurrentMonth ? 'none' : (monthEndPass ? 'green' : 'red'),
         lossStreak: streak, shortfall, lossAlert: bDaily > 0 && streak >= num(c.lossAlertDays),

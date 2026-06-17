@@ -49,19 +49,19 @@ export function useInsightData(branchId = 'default') {
         const net = netRevenue(gross, c.vatRate)
         return { dateKey: k, gross, cogs, net, foodCostPct: foodCostPct(cogs, net), grossProfit: grossProfit(net, cogs), hasData: gross > 0 || cogs > 0 }
       })
-      // BEP: ใช้ food cost ฐาน net (margin ถูกต้องเทียบยอด net) · เฉพาะวันข้อมูลครบ (มีทั้งยอด+ต้นทุน)
+      // BEP: ฐาน gross (ซื้อวัตถุดิบ+ขายรวม VAT) → food cost ÷ ยอด gross · เฉพาะวันข้อมูลครบ
       const complete = base.filter(d => d.net > 0 && d.cogs > 0)
       const totCogs = complete.reduce((s, d) => s + d.cogs, 0)
-      const totNet = complete.reduce((s, d) => s + d.net, 0)
-      const avgFcNet = totNet > 0 ? (totCogs / totNet) * 100 : 0
+      const totGross = complete.reduce((s, d) => s + d.gross, 0)
+      const avgFcBep = totGross > 0 ? (totCogs / totGross) * 100 : 0
       // แสดงผล: Food Cost % แบบ Hub (gross + เฉลี่ย mean + ตัดวันไม่ครบ) → ตรงกับหน้า Hub
       const avgFcDisplay = hubFoodCostStats(base).avg
       // Fixed/เดือน = ค่าแรง(เดือนนี้ ถ้ายังไม่กรอกใช้เดือนก่อน) + ค่าเช่า + ธรรมเนียม/12
       const labor = store.current.curLabor > 0 ? store.current.curLabor : store.current.prevLabor
       const fixedMonthly = num(c.rentCost) + num(c.annualFeeYearly) / 12 + labor
-      const bep = bepDaily(fixedMonthly, avgFcNet, c.openDays)
-      // ติดธง hit ด้วย BEP คงที่
-      const s = base.map(d => ({ ...d, bepDaily: bep, hitBep: hitBep(d.net, bep) }))
+      const bep = bepDaily(fixedMonthly, avgFcBep, c.openDays)   // BEP = ยอดขายรวม VAT/วัน
+      // ติดธง hit ด้วย BEP คงที่ (เทียบยอด gross)
+      const s = base.map(d => ({ ...d, bepDaily: bep, hitBep: hitBep(d.gross, bep) }))
 
       setSeries(s)
       setAgg({ avgFoodCostPct: avgFcDisplay, bep, fixedMonthly })

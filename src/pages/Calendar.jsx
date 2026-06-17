@@ -37,18 +37,19 @@ export function Calendar({ branchId = 'default' }) {
       ])
       if (!alive) return
       const fixedMonthly = (cfg.rentCost || 0) + (cfg.annualFeeYearly || 0) / 12 + labor
-      // food cost เฉลี่ยทั้งเดือน → ใช้คิด BEP/วัน
+      // food cost เฉลี่ยทั้งเดือน (ฐาน gross) → ใช้คิด BEP/วัน (ยอดรวม VAT)
       const totCogs = Object.values(cogs).reduce((s, v) => s + v, 0)
-      const totNet = Object.keys(gross).reduce((s, k) => s + netRevenue(gross[k], cfg.vatRate), 0)
-      const avgFc = totNet > 0 ? (totCogs / totNet) * 100 : 0
+      const totGross = Object.values(gross).reduce((s, v) => s + v, 0)
+      const avgFc = totGross > 0 ? (totCogs / totGross) * 100 : 0
       const bep = bepDaily(fixedMonthly, avgFc, defaultOpenDays(mk, cfg.openDays > 0 ? cfg.openDays : 30))
       const map = {}
       const allKeys = new Set([...Object.keys(gross), ...Object.keys(cogs)])
       allKeys.forEach(k => {
-        const net = netRevenue(gross[k] || 0, cfg.vatRate)
+        const g = gross[k] || 0
+        const net = netRevenue(g, cfg.vatRate)
         const cg = cogs[k] || 0
-        const fcHub = hubFoodCostDaily(gross[k] || 0, cg)   // Food Cost ฐาน gross (ตรงกับ Hub/Overview)
-        map[k] = { net, cogs: cg, fcPct: fcHub == null ? 0 : fcHub, gp: grossProfit(net, cg), bep, hit: hitBep(net, bep) }
+        const fcHub = hubFoodCostDaily(g, cg)   // Food Cost ฐาน gross (ตรงกับ Hub/Overview)
+        map[k] = { net, gross: g, cogs: cg, fcPct: fcHub == null ? 0 : fcHub, gp: grossProfit(net, cg), bep, hit: hitBep(g, bep) }
       })
       setDays(map); setLoading(false)
     })()
@@ -112,11 +113,12 @@ export function Calendar({ branchId = 'default' }) {
             {toThaiDate(sel)}{sel === todayKey && <span style={{ color: 'var(--red)', fontWeight: 700 }}> · วันนี้</span>}
           </div>
           <div className="day-detail">
-            <Row label="ยอดขายสุทธิ" value={thb(days[sel].net)} />
+            <Row label="ยอดขาย (รวม VAT)" value={thb(days[sel].gross)} />
+            <Row label="ยอดขายสุทธิ (หัก VAT)" value={thb(days[sel].net)} />
             <Row label="ต้นทุนวัตถุดิบ" value={thb(days[sel].cogs)} />
             <Row label="กำไรขั้นต้น" value={thb(days[sel].gp)} strong />
             <Row label="Food Cost %" value={pctStr(days[sel].fcPct)} />
-            <Row label="BEP/วัน" value={thb(days[sel].bep)} />
+            <Row label="BEP/วัน (รวม VAT)" value={thb(days[sel].bep)} />
             <Row label="สถานะ" value={days[sel].hit ? '✓ ทะลุ BEP' : '✗ ไม่ทะลุ'} color={days[sel].hit ? '#1A7F37' : '#E24B4A'} />
           </div>
         </div>

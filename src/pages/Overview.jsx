@@ -24,7 +24,7 @@ export function Overview({ branchId = 'default', onTab }) {
   const trendOf = (sel) => recent.map(d => ({ label: toThaiShort(d.dateKey), value: sel(d) }))
 
   const t = today || {}
-  const progress = bepProgressPct(t.net, t.bepDaily)
+  const progress = bepProgressPct(t.gross, t.bepDaily)   // BEP เทียบยอดรวม VAT
   const bStatus = bepStatus(progress)
   const bColor = STATUS_COLORS[bStatus]
   const bLabel = progress >= 100 ? 'ทะลุจุดคุ้มทุนแล้ว' : progress >= 80 ? 'ใกล้ถึงจุดคุ้มทุน' : 'ต่ำกว่าจุดคุ้มทุน'
@@ -48,7 +48,7 @@ export function Overview({ branchId = 'default', onTab }) {
         </div>
         <div className="hero-2col">
           <div className="hero-left">
-            <BepGauge progress={progress} status={bStatus} revenueNet={t.net} bep={t.bepDaily} dialOnly />
+            <BepGauge progress={progress} status={bStatus} revenueNet={t.gross} bep={t.bepDaily} dialOnly />
           </div>
           <div className="hero-div" />
           <div className="hero-right">
@@ -56,10 +56,10 @@ export function Overview({ branchId = 'default', onTab }) {
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: bColor }} />{bLabel}
             </div>
             <div className="hero-stat">
-              <span>ยอดขายวันนี้</span><b style={{ color: '#1D4ED8' }}>{thb(t.net)}</b>
+              <span>ยอดขายวันนี้ (รวม VAT)</span><b style={{ color: '#1D4ED8' }}>{thb(t.gross)}</b>
             </div>
             <div className="hero-stat">
-              <span>จุดคุ้มทุน/วัน</span><b>{thb(t.bepDaily)}</b>
+              <span>จุดคุ้มทุน/วัน (รวม VAT)</span><b>{thb(t.bepDaily)}</b>
             </div>
             <div className="hero-stat">
               <span>ทะลุ BEP</span><b style={{ color: STATUS_COLORS.green }}>{hitDays}/{dataDays} วัน</b>
@@ -92,7 +92,7 @@ export function Overview({ branchId = 'default', onTab }) {
           )
           return <>
             {dim('📅', 'รายวัน (วันนี้)', `${Math.round(progress)}%`, bColor,
-              `ยอด ${thb(t.net)} / BEP ${thb(b.daily)}/วัน`)}
+              `ยอด(รวม VAT) ${thb(t.gross)} / BEP ${thb(b.daily)}/วัน`)}
             {dim('📈', 'สะสมเทียบ BEP', b.cumDiff >= 0 ? `นำ +${thb(b.cumDiff)}` : `ตาม −${thb(Math.abs(b.cumDiff))}`,
               b.cumDiff >= 0 ? STATUS_COLORS.green : STATUS_COLORS.red,
               `ยอดสะสม ${thb(b.revenueMTD)} / ควรได้ ${thb(b.cumulative)} (${b.daysElapsed} วัน)`)}
