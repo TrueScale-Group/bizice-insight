@@ -508,6 +508,13 @@ html, body, #root {
   .page { padding: 24px 28px 48px; max-width: 920px; margin: 0 auto; }
   /* ไม่มี bottom bar บน PC → popup กึ่งกลางจริง */
   .sheet-backdrop { padding-bottom: 16px; }
+
+  /* ปฏิทินบน PC: ช่องวันสี่เหลี่ยมเตี้ยลง (ไม่จัตุรัสยักษ์) + ฟอนต์อ่านง่ายขึ้น */
+  .cal-cell { aspect-ratio: auto; min-height: 60px; gap: 2px; border-radius: 10px; }
+  .cal-wd-cell { font-size: 12px; }
+  .cal-d { font-size: 15px; }
+  .cal-mark { font-size: 12px; }
+  .cal-rev { font-size: 11px; }
 }
 
 /* จอเตี้ย (มือถือแนวนอน) — ลดความสูง popup ลงอีก */
