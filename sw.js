@@ -1,9 +1,9 @@
 /* BizICE Insight — Service Worker (read-only PWA cache)
    • App shell (HTML/JS/CSS/images) → network-first → cache fallback (SPA)
    • Firestore/Firebase/Google APIs → ผ่านตรง (Firebase จัดการ offline เอง)
-   • 1.0.0 ถูกแทนตอน build (ดู vite.config.js) → เลขแคช = เวอร์ชันแอพ
+   • 1.1.0 ถูกแทนตอน build (ดู vite.config.js) → เลขแคช = เวอร์ชันแอพ
 */
-const CACHE_VERSION = 'bizice-insight-v1.0.0'
+const CACHE_VERSION = 'bizice-insight-v1.1.0'
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon-insight.png', './icon-192.png']
 
 self.addEventListener('install', (event) => {
