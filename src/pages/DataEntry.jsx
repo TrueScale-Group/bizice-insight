@@ -177,7 +177,7 @@ export function DataEntry({ branchId = 'default', onClose }) {
                   <NumField label="ยอดขายรวมเดือน (รวม VAT)" value={draft.revenueGrossOverride} onChange={set('revenueGrossOverride')} hint="กรอกเมื่อไม่มีใน Daily Income" />
                   <NumField label="ต้นทุนวัตถุดิบรวมเดือน" value={draft.cogsOverride} onChange={set('cogsOverride')} hint="กรอกเมื่อไม่มีใน Inventory" />
                   <NumField label="ค่าเช่าเดือนนี้" value={draft.rentCost} onChange={set('rentCost')} hint="ว่าง = ใช้ค่าในตั้งค่า" />
-                  <NumField label="วันเปิดเดือนนี้" value={draft.openDays} unit="วัน" onChange={set('openDays')} hint="0 = ใช้ค่าตั้งค่า (เดือนเปิด 09/2025 อาจไม่ครบ)" />
+                  <NumField label="จำนวนวันที่เปิดขาย/เดือน" value={draft.openDays} unit="วัน" onChange={set('openDays')} hint="เว้นว่าง = 30 วัน · ใส่จำนวนจริงถ้าเปิดไม่ครบเดือน (เช่นเดือนเปิด 09/2025)" />
                 </>
               )}
 
