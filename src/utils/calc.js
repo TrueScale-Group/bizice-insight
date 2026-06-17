@@ -52,6 +52,25 @@ export function defaultOpenDays(monthKey, normalDefault = 30) {
 const pct = (num, den) => (den > 0 ? (num / den) * 100 : 0)
 const safe = (v) => (Number.isFinite(v) ? v : 0)
 
+// ════════ Food Cost แบบ Hub (ให้ตัวเลขตรงกับหน้า Hub) ════════
+// pct รายวัน = ต้นทุน ÷ ยอดรวม(gross รวม VAT) · null ถ้าวันนั้นข้อมูลไม่ครบ (ไม่มียอด หรือ ไม่มีต้นทุน)
+export function hubFoodCostDaily(gross, cogs) {
+  return (safe(gross) > 0 && safe(cogs) > 0) ? (safe(cogs) / safe(gross)) * 100 : null
+}
+// เฉลี่ยแบบ mean ของ %รายวัน (เฉพาะวันข้อมูลครบ) + สูงสุด/ต่ำสุด
+export function hubFoodCostStats(days = []) {
+  const valid = days.map(d => hubFoodCostDaily(d.gross, d.cogs)).filter(p => p !== null)
+  if (!valid.length) return { avg: 0, max: 0, min: 0, n: 0 }
+  const avg = valid.reduce((s, p) => s + p, 0) / valid.length
+  return { avg, max: Math.max(...valid), min: Math.min(...valid), n: valid.length }
+}
+// ไฟ Food Cost ตามเกณฑ์ Hub: 🟢<42 · 🟡<47 · 🔴≥47
+export function foodCostStatus(p) {
+  if (p < 42) return 'green'
+  if (p < 47) return 'yellow'
+  return 'red'
+}
+
 // ── ยอดขายสุทธิ (หัก VAT) ──
 export function netRevenue(gross, vatRate = 7) {
   return safe(gross) / (1 + vatRate / 100)

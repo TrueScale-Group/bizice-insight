@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { COL } from '../constants/collections'
 import { getGrossRange, getCOGSRange } from '../utils/integrations'
 import {
-  DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, thb, pctStr, defaultOpenDays,
+  DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, thb, pctStr, defaultOpenDays, hubFoodCostDaily,
 } from '../utils/calc'
 import { toThaiMonth, toThaiDate } from '../utils/formatDate'
 
@@ -47,7 +47,8 @@ export function Calendar({ branchId = 'default' }) {
       allKeys.forEach(k => {
         const net = netRevenue(gross[k] || 0, cfg.vatRate)
         const cg = cogs[k] || 0
-        map[k] = { net, cogs: cg, fcPct: foodCostPct(cg, net), gp: grossProfit(net, cg), bep, hit: hitBep(net, bep) }
+        const fcHub = hubFoodCostDaily(gross[k] || 0, cg)   // Food Cost ฐาน gross (ตรงกับ Hub/Overview)
+        map[k] = { net, cogs: cg, fcPct: fcHub == null ? 0 : fcHub, gp: grossProfit(net, cg), bep, hit: hitBep(net, bep) }
       })
       setDays(map); setLoading(false)
     })()

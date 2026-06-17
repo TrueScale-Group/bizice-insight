@@ -5,7 +5,7 @@ import {
 } from 'firebase/firestore'
 import { COL } from '../constants/collections'
 import {
-  DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal,
+  DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, hubFoodCostStats,
 } from '../utils/calc'
 import { toDateKey, addDays, toMonthKey } from '../utils/formatDate'
 
@@ -49,20 +49,22 @@ export function useInsightData(branchId = 'default') {
         const net = netRevenue(gross, c.vatRate)
         return { dateKey: k, gross, cogs, net, foodCostPct: foodCostPct(cogs, net), grossProfit: grossProfit(net, cogs), hasData: gross > 0 || cogs > 0 }
       })
-      // food cost เฉลี่ย (เฉพาะวันมีขาย)
-      const sales = base.filter(d => d.net > 0)
-      const totCogs = sales.reduce((s, d) => s + d.cogs, 0)
-      const totNet = sales.reduce((s, d) => s + d.net, 0)
-      const avgFc = totNet > 0 ? (totCogs / totNet) * 100 : 0
+      // BEP: ใช้ food cost ฐาน net (margin ถูกต้องเทียบยอด net) · เฉพาะวันข้อมูลครบ (มีทั้งยอด+ต้นทุน)
+      const complete = base.filter(d => d.net > 0 && d.cogs > 0)
+      const totCogs = complete.reduce((s, d) => s + d.cogs, 0)
+      const totNet = complete.reduce((s, d) => s + d.net, 0)
+      const avgFcNet = totNet > 0 ? (totCogs / totNet) * 100 : 0
+      // แสดงผล: Food Cost % แบบ Hub (gross + เฉลี่ย mean + ตัดวันไม่ครบ) → ตรงกับหน้า Hub
+      const avgFcDisplay = hubFoodCostStats(base).avg
       // Fixed/เดือน = ค่าแรง(เดือนนี้ ถ้ายังไม่กรอกใช้เดือนก่อน) + ค่าเช่า + ธรรมเนียม/12
       const labor = store.current.curLabor > 0 ? store.current.curLabor : store.current.prevLabor
       const fixedMonthly = num(c.rentCost) + num(c.annualFeeYearly) / 12 + labor
-      const bep = bepDaily(fixedMonthly, avgFc, c.openDays)
+      const bep = bepDaily(fixedMonthly, avgFcNet, c.openDays)
       // ติดธง hit ด้วย BEP คงที่
       const s = base.map(d => ({ ...d, bepDaily: bep, hitBep: hitBep(d.net, bep) }))
 
       setSeries(s)
-      setAgg({ avgFoodCostPct: avgFc, bep, fixedMonthly })
+      setAgg({ avgFoodCostPct: avgFcDisplay, bep, fixedMonthly })
       setLoading(false)
     }
 

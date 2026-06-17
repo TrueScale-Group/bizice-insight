@@ -1,29 +1,13 @@
 import { useState } from 'react'
-import { STATUS_COLORS } from '../utils/calc'
+import { STATUS_COLORS, hubFoodCostDaily, hubFoodCostStats, foodCostStatus } from '../utils/calc'
 
-// ไฟ Food Cost (ต่ำ=ดี): 🟢≤45 · 🟡≤48 · 🔴>48
-function foodStatus(p) {
-  if (p <= 45) return 'green'
-  if (p <= 48) return 'yellow'
-  return 'red'
-}
 const TH_DOW = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
 const dow = (k) => TH_DOW[new Date(k + 'T00:00:00').getDay()]
 const dayNum = (k) => +k.slice(8, 10)
 const pct1 = (v) => `${(+v).toFixed(1)}%`
 
-// เฉลี่ยถ่วงน้ำหนัก (รวมต้นทุน ÷ รวมยอดขาย) + สูงสุด/ต่ำสุด (เฉพาะวันมีขาย)
-function avgStat(arr) {
-  const sales = arr.filter(d => d.net > 0)
-  const totCogs = sales.reduce((s, d) => s + d.cogs, 0)
-  const totNet = sales.reduce((s, d) => s + d.net, 0)
-  const avg = totNet > 0 ? (totCogs / totNet) * 100 : 0
-  const pcts = sales.map(d => d.foodCostPct)
-  return { avg, max: pcts.length ? Math.max(...pcts) : 0, min: pcts.length ? Math.min(...pcts) : 0, n: sales.length }
-}
-
 function AvgCard({ title, stat }) {
-  const color = stat.n > 0 ? STATUS_COLORS[foodStatus(stat.avg)] : STATUS_COLORS.none
+  const color = stat.n > 0 ? STATUS_COLORS[foodCostStatus(stat.avg)] : STATUS_COLORS.none
   return (
     <div className="fc-avgcard">
       <div className="fc-avgcard-title">{title}</div>
@@ -37,27 +21,27 @@ export function FoodCostPanel({ series = [] }) {
   const [tab, setTab] = useState('week')   // week | m30
   const last7 = series.slice(-7)
   const last30 = series.slice(-30)
-  const a7 = avgStat(last7), a30 = avgStat(last30)
+  const a7 = hubFoodCostStats(last7), a30 = hubFoodCostStats(last30)
 
   const bars = tab === 'week' ? last7 : last30
   const isWeek = tab === 'week'
   const lastIdx = bars.length - 1
 
-  // สเกล + เฉลี่ยของช่วงที่แสดง
-  const vals = bars.filter(d => d.net > 0).map(d => d.foodCostPct)
+  // pct รายวันแบบ Hub (null = ข้อมูลไม่ครบ)
+  const pctOf = (d) => hubFoodCostDaily(d.gross, d.cogs)
+  const vals = bars.map(pctOf).filter(p => p !== null)
   const scaleMax = Math.max(...vals, 1) * 1.12
-  const stat = isWeek ? a7 : a30
-  const avg = stat.avg
+  const avg = (isWeek ? a7 : a30).avg
 
   const W = 320, H = 150, padX = 8, padTop = 16, padBot = 22
   const plotH = H - padTop - padBot
   const bw = (W - padX * 2) / bars.length
   const avgY = padTop + (plotH - (Math.max(avg, 0) / scaleMax) * plotH)
 
-  const barColor = (d, isToday) => {
-    if (!(d.net > 0) && !(d.cogs > 0)) return '#E5E7EB'        // ไม่มีข้อมูล
-    if (isToday) return STATUS_COLORS.yellow                    // วันนี้ยังไม่จบ = เหลือง
-    return STATUS_COLORS[foodStatus(d.foodCostPct)]
+  const barColor = (p, isToday) => {
+    if (p === null) return '#E5E7EB'                 // ไม่มีข้อมูล
+    if (isToday) return STATUS_COLORS.yellow          // วันนี้ยังไม่จบ = เหลือง
+    return STATUS_COLORS[foodCostStatus(p)]
   }
 
   return (
@@ -79,8 +63,9 @@ export function FoodCostPanel({ series = [] }) {
 
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }}>
         {bars.map((d, i) => {
-          const hasData = d.net > 0 || d.cogs > 0
-          const h = hasData ? Math.max((d.foodCostPct / scaleMax) * plotH, 2) : 0
+          const p = pctOf(d)
+          const hasData = p !== null
+          const h = hasData ? Math.max((p / scaleMax) * plotH, 2) : 0
           const x = padX + i * bw
           const y = padTop + (plotH - h)
           const isToday = i === lastIdx
@@ -89,11 +74,11 @@ export function FoodCostPanel({ series = [] }) {
           return (
             <g key={i}>
               {hasData
-                ? <rect x={x + bw * gap} y={y} width={bw * (1 - gap * 2)} height={h} rx="3" fill={barColor(d, isToday)} />
+                ? <rect x={x + bw * gap} y={y} width={bw * (1 - gap * 2)} height={h} rx="3" fill={barColor(p, isToday)} />
                 : <line x1={x + bw * gap} y1={H - padBot} x2={x + bw * (1 - gap)} y2={H - padBot} stroke="#D1D5DB" strokeWidth="1.5" />}
               {isWeek && hasData && (
                 <text x={cx} y={y - 3} textAnchor="middle" fontSize="8" fontFamily="Prompt"
-                  fontWeight="700" fill={barColor(d, isToday)}>{pct1(d.foodCostPct)}</text>
+                  fontWeight="700" fill={barColor(p, isToday)}>{pct1(p)}</text>
               )}
               {isWeek && (
                 <text x={cx} y={H - 7} textAnchor="middle" fontSize="9" fontFamily="Sarabun"
@@ -116,7 +101,7 @@ export function FoodCostPanel({ series = [] }) {
         </>}
       </svg>
 
-      <div className="fc-legend">🟢 ≤45% · 🟡 45–48% (หรือวันนี้ยังไม่จบ) · 🔴 &gt;48%</div>
+      <div className="fc-legend">🟢 &lt;42% · 🟡 42–47% (หรือวันนี้ยังไม่จบ) · 🔴 ≥47% · ฐานยอดรวม VAT (ตรงกับ Hub)</div>
     </div>
   )
 }

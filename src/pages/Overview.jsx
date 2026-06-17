@@ -7,16 +7,9 @@ import { FoodCostPanel } from '../components/FoodCostPanel'
 import { Modal } from '../components/Modal'
 import {
   bepProgressPct, bepStatus, grossProfitPct, grossDailyStatus,
-  STATUS_COLORS, thb, pctStr,
+  STATUS_COLORS, thb, pctStr, foodCostStatus,
 } from '../utils/calc'
 import { toThaiShort } from '../utils/formatDate'
-
-// ไฟ Food Cost (ต่ำ=ดี): 🟢≤45 · 🟡≤48 · 🔴>48
-function foodStatus(p) {
-  if (p <= 45) return 'green'
-  if (p <= 48) return 'yellow'
-  return 'red'
-}
 
 export function Overview({ branchId = 'default', onTab }) {
   const { loading, today, avgFoodCostPct, series } = useInsightData(branchId)
@@ -142,7 +135,7 @@ export function Overview({ branchId = 'default', onTab }) {
           title="Food Cost % (เฉลี่ย 30 วัน)"
           value={pctStr(avgFoodCostPct)}
           sub={`ต้นทุน ${thb(t.cogs)} วันนี้`}
-          status={avgFoodCostPct > 0 ? foodStatus(avgFoodCostPct) : 'none'}
+          status={avgFoodCostPct > 0 ? foodCostStatus(avgFoodCostPct) : 'none'}
           src="Inventory ÷ Daily Income"
           formula="Food Cost% = ต้นทุนตัดสต็อก ÷ ยอดขายสุทธิ (เฉลี่ย 30 วันล่าสุด)"
           rows={[
