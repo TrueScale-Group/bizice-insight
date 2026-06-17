@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { COL } from '../constants/collections'
 import { getGrossRange, getCOGSRange } from '../utils/integrations'
 import {
-  DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, thb, pctStr,
+  DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, thb, pctStr, defaultOpenDays,
 } from '../utils/calc'
 import { toThaiMonth, toThaiDate } from '../utils/formatDate'
 
@@ -41,7 +41,7 @@ export function Calendar({ branchId = 'default' }) {
       const totCogs = Object.values(cogs).reduce((s, v) => s + v, 0)
       const totNet = Object.keys(gross).reduce((s, k) => s + netRevenue(gross[k], cfg.vatRate), 0)
       const avgFc = totNet > 0 ? (totCogs / totNet) * 100 : 0
-      const bep = bepDaily(fixedMonthly, avgFc, cfg.openDays > 0 ? cfg.openDays : 30)
+      const bep = bepDaily(fixedMonthly, avgFc, defaultOpenDays(mk, cfg.openDays > 0 ? cfg.openDays : 30))
       const map = {}
       const allKeys = new Set([...Object.keys(gross), ...Object.keys(cogs)])
       allKeys.forEach(k => {

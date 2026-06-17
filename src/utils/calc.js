@@ -34,6 +34,20 @@ export const STATUS_COLORS = {
   none:   '#C7C7CC',
 }
 
+// ── ร้านเปิดจริง 9 ก.ย. 2025 ──
+export const STORE_OPEN_MONTH = '202509'
+export const STORE_OPEN_DAY = 9
+// จำนวนวันในเดือน (monthKey "YYYYMM")
+export function monthDaysCount(monthKey) {
+  const y = +monthKey.slice(0, 4), m = +monthKey.slice(4, 6)
+  return new Date(y, m, 0).getDate()
+}
+// วันเปิดขาย default ต่อเดือน: เดือนเปิดร้าน = นับจากวันเปิดถึงสิ้นเดือน (09/2025 = 22 วัน) · เดือนอื่น = normalDefault (30)
+export function defaultOpenDays(monthKey, normalDefault = 30) {
+  if (monthKey === STORE_OPEN_MONTH) return monthDaysCount(monthKey) - STORE_OPEN_DAY + 1
+  return normalDefault
+}
+
 // ── helper ──
 const pct = (num, den) => (den > 0 ? (num / den) * 100 : 0)
 const safe = (v) => (Number.isFinite(v) ? v : 0)

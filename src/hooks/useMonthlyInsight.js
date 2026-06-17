@@ -7,7 +7,7 @@ import { COL } from '../constants/collections'
 import {
   DEFAULT_CONFIG, netRevenue, laborTotal, marketingSpent, marketingBudget,
   opexTotal, ebit, ebt, ratio, laborHeadroom, bepDaily, bepMonthly,
-  laborStatus, marketingStatus, opexStatus, netProfitMonthlyStatus, foodCostPct,
+  laborStatus, marketingStatus, opexStatus, netProfitMonthlyStatus, foodCostPct, defaultOpenDays,
 } from '../utils/calc'
 import { toDateKey } from '../utils/formatDate'
 
@@ -59,7 +59,9 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       const cogsMonth = usingCogsOverride ? num(M.cogsOverride) : cogsFromApp
       // ค่าเช่า/วันเปิด: ต่อเดือนก่อน (ว่าง = ใช้ค่าใน Settings)
       const monthRent = (M.rentCost != null && M.rentCost !== '') ? num(M.rentCost) : num(c.rentCost)
-      const monthOpenDays = num(M.openDays) > 0 ? num(M.openDays) : (num(c.openDays) > 0 ? num(c.openDays) : 30)
+      const monthOpenDays = num(M.openDays) > 0
+        ? num(M.openDays)
+        : defaultOpenDays(monthKey, num(c.openDays) > 0 ? num(c.openDays) : 30)
       // ยอดเดือนก่อน (สำหรับงบการตลาด forward): ใช้ override ของเดือนก่อนถ้ามี (เดือนย้อนหลังที่กรอกเอง) ก่อนค่อย fallback แอพ
       const PM = store.current.prevMonthly
       const prevOverride = num(PM.revenueGrossOverride)

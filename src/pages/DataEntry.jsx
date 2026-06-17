@@ -4,7 +4,7 @@ import { doc, getDoc, collection, onSnapshot, query, where, documentId } from 'f
 import { COL } from '../constants/collections'
 import { useMonthlyInsight, currentMonthKey } from '../hooks/useMonthlyInsight'
 import { NumField } from '../components/Accordion'
-import { thb, pctStr, STATUS_COLORS } from '../utils/calc'
+import { thb, pctStr, STATUS_COLORS, defaultOpenDays } from '../utils/calc'
 import { toThaiMonth } from '../utils/formatDate'
 
 // monthKey "YYYYMM" ↔ input[type=month] "YYYY-MM"
@@ -177,7 +177,8 @@ export function DataEntry({ branchId = 'default', onClose }) {
                   <NumField label="ยอดขายรวมเดือน (รวม VAT)" value={draft.revenueGrossOverride} onChange={set('revenueGrossOverride')} hint="กรอกเมื่อไม่มีใน Daily Income" />
                   <NumField label="ต้นทุนวัตถุดิบรวมเดือน" value={draft.cogsOverride} onChange={set('cogsOverride')} hint="กรอกเมื่อไม่มีใน Inventory" />
                   <NumField label="ค่าเช่าเดือนนี้" value={draft.rentCost} onChange={set('rentCost')} hint="ว่าง = ใช้ค่าในตั้งค่า" />
-                  <NumField label="จำนวนวันที่เปิดขาย/เดือน" value={draft.openDays} unit="วัน" onChange={set('openDays')} hint="เว้นว่าง = 30 วัน · ใส่จำนวนจริงถ้าเปิดไม่ครบเดือน (เช่นเดือนเปิด 09/2025)" />
+                  <NumField label="จำนวนวันที่เปิดขาย/เดือน" value={draft.openDays} unit="วัน" onChange={set('openDays')}
+                    hint={`เว้นว่าง = ${defaultOpenDays(monthKey)} วัน${monthKey === '202509' ? ' (เดือนเปิดร้าน 9 ก.ย. = 22 วัน)' : ''}`} />
                 </>
               )}
 
