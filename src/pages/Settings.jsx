@@ -85,11 +85,10 @@ export function Settings({ branchId = 'default' }) {
       <Modal open={modal === 'branch'} onClose={() => setModal(null)} title="ข้อมูลสาขา">
         <label className="fld"><span className="fld-label">ชื่อสาขา</span>
           <div className="fld-input"><input value={draft.branchName ?? ''} onChange={setStr('branchName')} placeholder="Mixue - 509" /></div></label>
-        <label className="fld"><span className="fld-label">รหัส warehouse (ผูกกับ Inventory)<span className="fld-hint"> · ว่าง = รวมทุกคลัง</span></span>
-          <div className="fld-input"><input value={draft.warehouseId ?? ''} onChange={setStr('warehouseId')} placeholder="all" /></div></label>
+        <p className="acc-note">🔄 สาขา/คลัง sync จาก Inventory อัตโนมัติ (เลือกจากแถบบน/sidebar) — ต้นทุนกรองตามคลังของสาขาที่เลือก</p>
         <NumField label="วันเปิด/เดือน" value={draft.openDays} unit="วัน" onChange={set('openDays')} />
         <NumField label="VAT" value={draft.vatRate} unit="%" onChange={set('vatRate')} />
-        <button className="btn-save" onClick={() => save(['branchName', 'warehouseId', 'openDays', 'vatRate'], 'สาขา')}>บันทึก</button>
+        <button className="btn-save" onClick={() => save(['branchName', 'openDays', 'vatRate'], 'สาขา')}>บันทึก</button>
       </Modal>
 
       <Modal open={modal === 'variable'} onClose={() => setModal(null)} title="ต้นทุนแปรผัน (Food Cost)">
@@ -140,7 +139,7 @@ export function Settings({ branchId = 'default' }) {
           ยอดขาย ← <b>income_records</b> (Daily Income)<br />
           ต้นทุน ← <b>Inv_cut_logs</b> (Inventory)<br />
           ราคา master ← <b>mixue_data</b> (Cost Manager)<br />
-          warehouse ปัจจุบัน: <b>{draft.warehouseId || 'ทุกคลัง'}</b>
+          สาขา/คลังที่ใช้อยู่: <b>{branchId === 'default' ? 'รวมทุกสาขา' : branchId}</b>
         </p>
       </Modal>
     </div>

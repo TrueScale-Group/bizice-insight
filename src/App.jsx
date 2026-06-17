@@ -140,24 +140,26 @@ export default function App() {
             <img src="./icon-insight.png" alt="Insight" />
           </div>
           <div className="app-brand-name">Mixue Insight{!canEdit && <span className="view-badge">👁 ดูอย่างเดียว</span>}</div>
-          <select
-            className="app-brand-sub"
-            value={branchId}
-            onChange={e => selectBranch(e.target.value)}
-            aria-label="เลือกสาขา"
-            style={{
-              marginTop: 1, padding: '1px 18px 1px 4px', fontSize: 11, lineHeight: 1.3,
-              color: 'rgba(255,255,255,.82)', background: 'rgba(255,255,255,.12)',
-              border: '1px solid rgba(255,255,255,.22)', borderRadius: 6,
-              maxWidth: 160, appearance: 'none', WebkitAppearance: 'none',
-              cursor: 'pointer', outline: 'none',
-              backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 10 10\'><path d=\'M2 4l3 3 3-3\' fill=\'none\' stroke=\'white\' stroke-width=\'1.4\'/></svg>")',
-              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center',
-            }}>
-            {branches.map(b => (
-              <option key={b.id} value={b.id} style={{ color: '#111' }}>{b.name}</option>
-            ))}
-          </select>
+          {branches.length > 1 && (
+            <select
+              className="app-brand-sub"
+              value={branchId}
+              onChange={e => selectBranch(e.target.value)}
+              aria-label="เลือกสาขา"
+              style={{
+                marginTop: 1, padding: '2px 20px 2px 7px', fontSize: 11, lineHeight: 1.3,
+                color: 'var(--txt2)', backgroundColor: 'var(--bg)',
+                border: '1px solid var(--border)', borderRadius: 6,
+                maxWidth: 160, appearance: 'none', WebkitAppearance: 'none',
+                cursor: 'pointer', outline: 'none',
+                backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 10 10\'><path d=\'M2 4l3 3 3-3\' fill=\'none\' stroke=\'%238E8E93\' stroke-width=\'1.4\'/></svg>")',
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 5px center',
+              }}>
+              {branches.map(b => (
+                <option key={b.id} value={b.id} style={{ color: '#111' }}>{b.name}</option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="app-topbar-right">
           <ConnectionStatus />
@@ -167,7 +169,7 @@ export default function App() {
 
       {/* ── Content ── */}
       <main className="ptr-scroll">
-        {tab === 'overview' && <Overview branchId={branchId} />}
+        {tab === 'overview' && <Overview branchId={branchId} onTab={setTab} />}
         {tab === 'calendar' && <Calendar branchId={branchId} />}
         {tab === 'report'   && <Report branchId={branchId} />}
         {tab === 'roi'      && <RoiRoe branchId={branchId} />}

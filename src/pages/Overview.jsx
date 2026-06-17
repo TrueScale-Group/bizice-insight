@@ -17,7 +17,7 @@ function foodStatus(p) {
   return 'red'
 }
 
-export function Overview({ branchId = 'default' }) {
+export function Overview({ branchId = 'default', onTab }) {
   const { loading, today, avgFoodCostPct, series } = useInsightData(branchId)
   const mo = useMonthlyInsight(branchId)
   const [range, setRange] = useState('week') // week | month
@@ -184,7 +184,7 @@ export function Overview({ branchId = 'default' }) {
           formula="ค่าแรง% = ค่าแรงรวม (+ ประกันสังคมนายจ้าง 5%) ÷ ยอดขายสุทธิเดือน · ไม่นับเงินเดือนเจ้าของ"
           rows={mo.indices ? [
             { label: 'ค่าแรงรวม (Insight)', value: thb(mo.indices.labor.value) },
-            { label: 'เหลือก่อนแตะเพดาน 30%', value: thb(mo.indices.labor.headroom), color: STATUS_COLORS.green },
+            { label: mo.indices.labor.headroom >= 0 ? 'เหลือก่อนแตะเพดาน 30%' : 'เกินเพดาน 30%', value: thb(mo.indices.labor.headroom), color: mo.indices.labor.headroom >= 0 ? STATUS_COLORS.green : STATUS_COLORS.red },
             { label: 'ยอดขายเดือน (Daily Income)', value: thb(mo.revenueMonthNet) },
           ] : null}
           legend="🟢 ≤25% · 🟡 25–30% · 🔴 >30%"
@@ -200,7 +200,7 @@ export function Overview({ branchId = 'default' }) {
           rows={mo.indices ? [
             { label: 'ใช้จริง (Insight)', value: thb(mo.indices.marketing.value) },
             { label: 'งบเพดานเดือนนี้', value: thb(mo.indices.marketing.budget.ceiling) },
-            { label: 'เหลือใช้ได้', value: thb(mo.indices.marketing.remaining), color: STATUS_COLORS.green },
+            { label: mo.indices.marketing.remaining >= 0 ? 'เหลือใช้ได้' : 'เกินงบ', value: thb(mo.indices.marketing.remaining), color: mo.indices.marketing.remaining >= 0 ? STATUS_COLORS.green : STATUS_COLORS.red },
           ] : null}
           legend="⚪ <1% · 🟢 1–3% · 🔴 >3%"
           pending={!mo.indices}
@@ -242,14 +242,22 @@ export function Overview({ branchId = 'default' }) {
       <div className="grp-box" style={{ borderColor: INVEST_BD }}>
       <div className="grp-head"><span className="grp-bar" style={{ background: INVEST_BD }} />💎 การลงทุน</div>
       <div className="kpi-grid">
-        <KpiCard bg={INVEST_BG} title="ROI / ROE" pending />
+        <div className="kpi-card" style={{ background: INVEST_BG, cursor: 'pointer' }} onClick={() => onTab && onTab('roi')}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="kpi-dot" style={{ background: STATUS_COLORS.none }} />
+            <span className="kpi-title">ROI / ROE</span>
+            <span style={{ marginLeft: 'auto', color: '#C7C7CC', fontSize: 13 }}>›</span>
+          </div>
+          <div className="kpi-value" style={{ fontSize: 15, color: 'var(--txt2)' }}>ดูแท็บ ROI-ROE</div>
+          <div className="kpi-sub">คืนทุน · ROI · Investor calc</div>
+        </div>
       </div>
       </div>
     </div>
   )
 }
 
-const monthHint = 'กรอกข้อมูลเดือนนี้ (กดค้างปุ่มกลาง)'
+const monthHint = 'ยังไม่ได้กรอกข้อมูลเดือนนี้'
 
 // สีพื้นพาสเทลแยกกลุ่ม
 const DAILY_BG = '#EAF1FC'   // ฟ้าพาสเทล — รายวัน

@@ -116,9 +116,10 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       })
       setLoading(false)
 
-      // ── A5: เขียน history/snapshot (ครั้งเดียวต่อ key/session) ──
+      // ── A5: เขียน history/snapshot (ครั้งเดียวต่อ key/session) · ไม่เขียนถ้าเป็น viewer ──
       const w = store.current.written
-      if (revenueMonthNet > 0 && !w.has('kpi')) {
+      const canWrite = window._bizMode !== 'viewer'
+      if (canWrite && revenueMonthNet > 0 && !w.has('kpi')) {
         w.add('kpi')
         setDoc(doc(db, COL.KPI_HISTORY, `${branchId}_${monthKey}`), {
           branchId, monthKey, labor: laborPct, marketing: mktPct, opex: opexPct, netProfit: netProfitPct,
@@ -127,7 +128,7 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
         }, { merge: true }).catch(() => {})
       }
       const tkey = toDateKey(today)
-      if (isCurrentMonth && num(gross[tkey]) > 0 && !w.has('day')) {
+      if (canWrite && isCurrentMonth && num(gross[tkey]) > 0 && !w.has('day')) {
         w.add('day')
         const netT = netRevenue(num(gross[tkey]), vat), cogsT = num(cogs[tkey])
         setDoc(doc(db, COL.DAILY_SNAPSHOT, `${branchId}_${tkey}`), {
