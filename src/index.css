@@ -322,6 +322,13 @@ html, body, #root {
   font-size: 11px; font-weight: 700; color: var(--txt3);
   text-transform: uppercase; letter-spacing: 0.07em; padding: 0 2px; margin: 14px 0 6px;
 }
+.set-entry-btn {
+  width: 100%; border: none; background: var(--red); color: #fff; cursor: pointer;
+  padding: 12px; border-radius: 12px; font-family: 'Prompt'; font-weight: 700; font-size: 15px;
+  margin: 10px 0 4px; box-shadow: 0 4px 12px rgba(227,30,36,.25);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.set-entry-btn:active { transform: scale(.98); }
 .set-card { background: var(--surf); border-radius: var(--rl); box-shadow: var(--sh); overflow: hidden; }
 .setting-row {
   display: flex; align-items: center; justify-content: space-between;
@@ -510,6 +517,7 @@ html, body, #root {
   .app-shell { flex-direction: row; max-width: none; margin: 0; box-shadow: none; }
   .desk-sidebar { display: flex; }
   .app-topbar, .bottom-nav { display: none; }
+  .set-entry-btn { display: none; }   /* PC ใช้ปุ่มใน sidebar แทน */
   .ptr-scroll { margin-left: 240px; }
   .page { padding: 24px 28px 48px; max-width: 920px; margin: 0 auto; }
   /* ไม่มี bottom bar บน PC → popup กึ่งกลางจริง */

@@ -173,7 +173,7 @@ export default function App() {
         {tab === 'calendar' && <Calendar branchId={branchId} />}
         {tab === 'report'   && <Report branchId={branchId} />}
         {tab === 'roi'      && <RoiRoe branchId={branchId} />}
-        {tab === 'settings' && <Settings branchId={branchId} />}
+        {tab === 'settings' && <Settings branchId={branchId} canEdit={canEdit} onEntry={() => setShowEntry(true)} />}
       </main>
 
       {showEntry && <DataEntry branchId={branchId} onClose={() => setShowEntry(false)} />}

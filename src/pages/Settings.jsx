@@ -19,7 +19,7 @@ function SettingRow({ icon, title, desc, onClick, danger }) {
   )
 }
 
-export function Settings({ branchId = 'default' }) {
+export function Settings({ branchId = 'default', canEdit = false, onEntry }) {
   const { cfg, loading, saveConfig } = useConfig(branchId)
   const { branches } = useBranches()
   const [draft, setDraft] = useState(cfg)
@@ -48,6 +48,11 @@ export function Settings({ branchId = 'default' }) {
 
       <div className="set-subbar">ตั้งค่า</div>
       <div className="set-subbar-time">อัปเดตล่าสุด {nowTime} น.</div>
+
+      {/* ปุ่มกรอกข้อมูล (มือถือ/แท็บเล็ตเท่านั้น — PC มีใน sidebar) · เฉพาะคนแก้ได้ */}
+      {canEdit && onEntry && (
+        <button className="set-entry-btn" onClick={onEntry}>✏️ กรอกข้อมูลรวม</button>
+      )}
 
       {/* กลุ่ม: ข้อมูล & ต้นทุน */}
       <div className="section-label">ข้อมูล & ต้นทุน</div>
