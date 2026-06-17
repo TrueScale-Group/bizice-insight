@@ -3,7 +3,7 @@ import { db } from '../firebase'
 import { doc, getDoc, collection, onSnapshot, query, where, documentId } from 'firebase/firestore'
 import { COL } from '../constants/collections'
 import { useMonthlyInsight, currentMonthKey } from '../hooks/useMonthlyInsight'
-import { Accordion, NumField } from '../components/Accordion'
+import { NumField } from '../components/Accordion'
 import { thb, pctStr, STATUS_COLORS } from '../utils/calc'
 import { toThaiMonth } from '../utils/formatDate'
 
@@ -39,6 +39,7 @@ export function DataEntry({ branchId = 'default', onClose }) {
   const [draft, setDraft] = useState({})
   const [toast, setToast] = useState('')
   const [filled, setFilled] = useState(new Set())   // เดือนที่กรอกข้อมูลแล้ว (มี doc)
+  const [section, setSection] = useState('sales')   // หัวข้อที่เลือก (sidebar ซ้าย)
 
   // โหลดรายชื่อเดือนที่กรอกแล้ว (ติ๊กเขียวบนแถบเดือน)
   useEffect(() => {
@@ -103,6 +104,15 @@ export function DataEntry({ branchId = 'default', onClose }) {
 
   const monthList = monthsFrom(STORE_OPEN, currentMonthKey())
 
+  // หัวข้อ sidebar ซ้าย (badge = index object ที่มี .pct/.status)
+  const SECTIONS = [
+    { id: 'sales', icon: '🗂️', title: 'ยอดขาย / ต้นทุน', badge: null },
+    { id: 'labor', icon: '👥', title: 'ค่าแรง', badge: indices?.labor },
+    { id: 'mkt', icon: '📣', title: 'การตลาด', badge: indices?.marketing },
+    { id: 'opex', icon: '🧾', title: 'ค่าดำเนินงาน (Opex)', badge: indices?.opex },
+    { id: 'interest', icon: '💸', title: 'ดอกเบี้ย (ก่อนภาษี)', badge: indices?.netProfit },
+  ]
+
   return (
     <div className="overlay">
       <header className="appbar">
@@ -115,84 +125,104 @@ export function DataEntry({ branchId = 'default', onClose }) {
       </header>
 
       <main className="ptr-scroll">
-        <div className="page">
+        <div className="de-wrap">
           {toast && <div className="toast-ok">{toast}</div>}
 
-          {/* แถบเดือนย้อนหลัง — ติ๊กเขียว = กรอกแล้ว (ตั้งแต่เปิดร้าน 09/2025) */}
-          <div className="fld-label" style={{ marginBottom: 4 }}>เลือกเดือน (✓ = กรอกแล้ว)</div>
-          <div className="month-strip">
-            {monthList.map(k => (
-              <button key={k} className={`month-chip ${k === monthKey ? 'sel' : ''} ${filled.has(k) ? 'filled' : ''}`}
-                onClick={() => setMonthKey(k)}>
-                {filled.has(k) && <span className="mc-check">✓</span>}
-                {chipLabel(k)}
-              </button>
-            ))}
+          {/* ── Topbar เดือน — ติ๊กเขียว = กรอกแล้ว (ตั้งแต่เปิดร้าน 09/2025) ── */}
+          <div className="de-monthbar">
+            <div className="month-strip">
+              {monthList.map(k => (
+                <button key={k} className={`month-chip ${k === monthKey ? 'sel' : ''} ${filled.has(k) ? 'filled' : ''}`}
+                  onClick={() => setMonthKey(k)}>
+                  {filled.has(k) && <span className="mc-check">✓</span>}
+                  {chipLabel(k)}
+                </button>
+              ))}
+            </div>
+            <div className="de-monthbar-tools">
+              <input className="de-month-input" type="month" value={toInput(monthKey)}
+                onChange={e => e.target.value && setMonthKey(fromInput(e.target.value))} />
+              <button className="copy-prev-btn" onClick={copyPrevMonth} title="คัดลอกค่าประจำจากเดือนก่อน">📋 คัดลอกเดือนก่อน</button>
+            </div>
           </div>
 
-          {/* เลือกเดือน (ปฏิทิน) + ปุ่มคัดลอกเดือนก่อน */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-            <label className="fld" style={{ flex: 1 }}>
-              <span className="fld-label">หรือเลือกจากปฏิทิน</span>
-              <div className="fld-input">
-                <input type="month" value={toInput(monthKey)} onChange={e => e.target.value && setMonthKey(fromInput(e.target.value))} />
-              </div>
-            </label>
-            <button className="copy-prev-btn" onClick={copyPrevMonth} title="คัดลอกค่าประจำจากเดือนก่อน">📋 คัดลอกเดือนก่อน</button>
+          {/* ── สรุปยอดขาย/ต้นทุน + ที่มา ── */}
+          <div className="card de-summary">
+            <div>
+              <span className="de-sum-label">ยอดขายสุทธิ · <b style={{ color: usingRevOverride ? '#1E3A8A' : '#1A7F37' }}>{usingRevOverride ? 'กรอกเอง' : 'Daily Income'}</b></span>
+              <div className="de-sum-val">{thb(revenueMonthNet)}</div>
+            </div>
+            <div className="de-sum-right">
+              <div className="kpi-sub">ต้นทุนวัตถุดิบ <b>{thb(cogsMonth)}</b> · <b style={{ color: usingCogsOverride ? '#1E3A8A' : '#1A7F37' }}>{usingCogsOverride ? 'กรอกเอง' : 'Inventory'}</b></div>
+              {isCurrentMonth && <div className="kpi-sub">⏳ เดือนปัจจุบัน — ไฟสถานะขึ้นตอนจบเดือน</div>}
+            </div>
           </div>
 
-          {/* preview ยอดขาย/ต้นทุน + ที่มา */}
-          <div className="card" style={{ padding: 12 }}>
-            <div className="card-label" style={{ textAlign: 'left' }}>ยอดขายสุทธิเดือนนี้
-              {' · '}<b style={{ color: usingRevOverride ? '#1E3A8A' : '#1A7F37' }}>{usingRevOverride ? 'กรอกเอง' : 'Daily Income'}</b></div>
-            <div style={{ fontFamily: 'Prompt', fontWeight: 700, fontSize: 20, color: '#1D4ED8' }}>{thb(revenueMonthNet)}</div>
-            <div className="kpi-sub">ต้นทุนวัตถุดิบ {thb(cogsMonth)} · <b style={{ color: usingCogsOverride ? '#1E3A8A' : '#1A7F37' }}>{usingCogsOverride ? 'กรอกเอง' : 'Inventory'}</b></div>
-            {isCurrentMonth && <div className="kpi-sub">⏳ เดือนปัจจุบัน — ไฟสถานะขึ้นตอนจบเดือน</div>}
+          {/* ── 2-pane: หัวข้อซ้าย · ฟอร์มขวา ── */}
+          <div className="de-layout">
+            <nav className="de-nav">
+              {SECTIONS.map(s => (
+                <button key={s.id} className={`de-nav-item ${section === s.id ? 'active' : ''}`} onClick={() => setSection(s.id)}>
+                  <span className="de-nav-ic">{s.icon}</span>
+                  <span className="de-nav-title">{s.title}</span>
+                  {s.badge && <span className="de-nav-badge" style={{ color: STATUS_COLORS[s.badge.status] }}>{pctStr(s.badge.pct)}</span>}
+                </button>
+              ))}
+            </nav>
+
+            <div className="de-content">
+              {section === 'sales' && (
+                <>
+                  <p className="acc-note">📌 สำหรับเดือนย้อนหลังที่ <b>Daily Income / Inventory ยังไม่มีข้อมูล</b> (เช่นก่อนเริ่มใช้ระบบ) — กรอกยอดรวมเองได้ · <b>เว้นว่าง/0 = ใช้ข้อมูลจริงจากแอพอัตโนมัติ</b></p>
+                  <NumField label="ยอดขายรวมเดือน (รวม VAT)" value={draft.revenueGrossOverride} onChange={set('revenueGrossOverride')} hint="กรอกเมื่อไม่มีใน Daily Income" />
+                  <NumField label="ต้นทุนวัตถุดิบรวมเดือน" value={draft.cogsOverride} onChange={set('cogsOverride')} hint="กรอกเมื่อไม่มีใน Inventory" />
+                  <NumField label="ค่าเช่าเดือนนี้" value={draft.rentCost} onChange={set('rentCost')} hint="ว่าง = ใช้ค่าในตั้งค่า" />
+                  <NumField label="วันเปิดเดือนนี้" value={draft.openDays} unit="วัน" onChange={set('openDays')} hint="0 = ใช้ค่าตั้งค่า (เดือนเปิด 09/2025 อาจไม่ครบ)" />
+                </>
+              )}
+
+              {section === 'labor' && (
+                <>
+                  <p className="acc-note">ไม่นับเงินเดือนเจ้าของ · ระบบบวกประกันสังคมนายจ้าง 5% ให้อัตโนมัติ</p>
+                  {L_FIELDS.map(([k, label]) => <NumField key={k} label={label} value={draft[k]} onChange={set(k)} />)}
+                  {indices && <div className="hint-row">รวม +SSO = <b>{thb(indices.labor.value)}</b> · เพดานเหลือ {thb(indices.labor.headroom)}</div>}
+                </>
+              )}
+
+              {section === 'mkt' && (
+                <>
+                  <NumField label="ค่าการตลาดจริง" value={draft.mktReal} onChange={set('mktReal')} hint="ads/ใบปลิว/ป้าย/ของแถม/event" />
+                  <NumField label="ส่วนลด/โปร (ประมาณ)" value={draft.mktPromoEst} onChange={set('mktPromoEst')} />
+                  <label className="fld">
+                    <span className="fld-label">หมายเหตุโปร</span>
+                    <div className="fld-input"><input value={draft.mktPromoNote ?? ''} onChange={e => set('mktPromoNote')(e.target.value)} /></div>
+                  </label>
+                  {indices && <div className="hint-row">งบเพดานเดือนนี้ (อิงยอดเดือนก่อน) {thb(indices.marketing.budget.ceiling)} · เหลือ {thb(indices.marketing.remaining)}</div>}
+                </>
+              )}
+
+              {section === 'opex' && (
+                <>
+                  <p className="acc-note">ค่าเช่าดึงจากตั้งค่า · ค่าแรง+การตลาดรวมให้อัตโนมัติ{annualFeeMonthly > 0 ? ` · ธรรมเนียมรายปี ${thb(annualFeeMonthly)}/เดือน รวมให้แล้ว` : ''}</p>
+                  {O_FIELDS.map(([k, label]) => <NumField key={k} label={label} value={draft[k]} onChange={set(k)} />)}
+                </>
+              )}
+
+              {section === 'interest' && (
+                <>
+                  <NumField label="ดอกเบี้ยจ่าย/เดือน" value={draft.interestExpense} onChange={set('interestExpense')} hint="default 0" />
+                  {indices && (
+                    <div className="hint-row">
+                      EBIT {thb(indices.netProfit.ebit)} → ก่อนภาษี <b style={{ color: STATUS_COLORS[indices.netProfit.status] }}>{thb(indices.netProfit.ebt)}</b>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div style={{ height: 14 }} />
+              <button className="btn-save" onClick={handleSave}>บันทึกข้อมูลเดือนนี้</button>
+            </div>
           </div>
-
-          {/* ⭐ ย้อนหลัง: กรอกยอดขาย/ต้นทุน/ค่าเช่า เองได้ (เดือนที่แอพอื่นไม่มีข้อมูล) */}
-          <Accordion title="ยอดขาย / ต้นทุน / ค่าเช่า (ย้อนหลัง)" icon="🗂️" defaultOpen={!isCurrentMonth}>
-            <p className="acc-note">📌 สำหรับเดือนย้อนหลังที่ <b>Daily Income / Inventory ยังไม่มีข้อมูล</b> (เช่นก่อนเริ่มใช้ระบบ) — กรอกยอดรวมเองได้ · <b>เว้นว่าง/0 = ใช้ข้อมูลจริงจากแอพอัตโนมัติ</b></p>
-            <NumField label="ยอดขายรวมเดือน (รวม VAT)" value={draft.revenueGrossOverride} onChange={set('revenueGrossOverride')} hint="กรอกเมื่อไม่มีใน Daily Income" />
-            <NumField label="ต้นทุนวัตถุดิบรวมเดือน" value={draft.cogsOverride} onChange={set('cogsOverride')} hint="กรอกเมื่อไม่มีใน Inventory" />
-            <NumField label="ค่าเช่าเดือนนี้" value={draft.rentCost} onChange={set('rentCost')} hint="ว่าง = ใช้ค่าในตั้งค่า" />
-            <NumField label="วันเปิดเดือนนี้" value={draft.openDays} unit="วัน" onChange={set('openDays')} hint="0 = ใช้ค่าตั้งค่า (เดือนเปิด 09/2025 อาจไม่ครบ)" />
-          </Accordion>
-
-          <Accordion title="ค่าแรง" icon="👥"
-            badge={indices ? pctStr(indices.labor.pct) : null}>
-            <p className="acc-note">ไม่นับเงินเดือนเจ้าของ · ระบบบวกประกันสังคมนายจ้าง 5% ให้อัตโนมัติ</p>
-            {L_FIELDS.map(([k, label]) => <NumField key={k} label={label} value={draft[k]} onChange={set(k)} />)}
-            {indices && <div className="hint-row">รวม +SSO = <b>{thb(indices.labor.value)}</b> · เพดานเหลือ {thb(indices.labor.headroom)}</div>}
-          </Accordion>
-
-          <Accordion title="การตลาด" icon="📣" badge={indices ? pctStr(indices.marketing.pct) : null}>
-            <NumField label="ค่าการตลาดจริง" value={draft.mktReal} onChange={set('mktReal')} hint="ads/ใบปลิว/ป้าย/ของแถม/event" />
-            <NumField label="ส่วนลด/โปร (ประมาณ)" value={draft.mktPromoEst} onChange={set('mktPromoEst')} />
-            <label className="fld">
-              <span className="fld-label">หมายเหตุโปร</span>
-              <div className="fld-input"><input value={draft.mktPromoNote ?? ''} onChange={e => set('mktPromoNote')(e.target.value)} /></div>
-            </label>
-            {indices && <div className="hint-row">งบเพดานเดือนนี้ (อิงยอดเดือนก่อน) {thb(indices.marketing.budget.ceiling)} · เหลือ {thb(indices.marketing.remaining)}</div>}
-          </Accordion>
-
-          <Accordion title="ค่าดำเนินงานอื่น (Opex)" icon="🧾" badge={indices ? pctStr(indices.opex.pct) : null}>
-            <p className="acc-note">ค่าเช่าดึงจากตั้งค่า · ค่าแรง+การตลาดรวมให้อัตโนมัติ{annualFeeMonthly > 0 ? ` · ธรรมเนียมรายปี ${thb(annualFeeMonthly)}/เดือน รวมให้แล้ว` : ''}</p>
-            {O_FIELDS.map(([k, label]) => <NumField key={k} label={label} value={draft[k]} onChange={set(k)} />)}
-          </Accordion>
-
-          <Accordion title="ดอกเบี้ย (กำไรก่อนภาษี)" icon="💸"
-            badge={indices ? pctStr(indices.netProfit.pct) : null}>
-            <NumField label="ดอกเบี้ยจ่าย/เดือน" value={draft.interestExpense} onChange={set('interestExpense')} hint="default 0" />
-            {indices && (
-              <div className="hint-row">
-                EBIT {thb(indices.netProfit.ebit)} → ก่อนภาษี <b style={{ color: STATUS_COLORS[indices.netProfit.status] }}>{thb(indices.netProfit.ebt)}</b>
-              </div>
-            )}
-          </Accordion>
-
-          <div style={{ height: 16 }} />
-          <button className="btn-save" onClick={handleSave}>บันทึกข้อมูลเดือนนี้</button>
         </div>
       </main>
     </div>
