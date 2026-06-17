@@ -12,9 +12,10 @@ const STATUS_TH = { blue: 'ดีเยี่ยม', green: 'ดี', yellow: '
  *        formula · rows[{label,value}] · legend · trend · trendColor · pending
  */
 export function KpiCard({ title, value, sub, status = 'none', bg, src,
-  formula, rows, legend, trend, trendColor, pending = false }) {
+  formula, rows, legend, trend, trendColor, pending = false, valueColor }) {
   const [open, setOpen] = useState(false)
   const dot = STATUS_COLORS[status] || STATUS_COLORS.none
+  const vColor = valueColor || dot   // สีตัวเลขค่า (override ได้ เช่น กำไรติดลบ=แดง)
   const clickable = !pending
 
   return (
@@ -30,7 +31,7 @@ export function KpiCard({ title, value, sub, status = 'none', bg, src,
           <div className="kpi-pending">รอข้อมูล (Phase ถัดไป)</div>
         ) : (
           <>
-            <div className="kpi-value" style={{ color: dot }}>{value}</div>
+            <div className="kpi-value" style={{ color: vColor }}>{value}</div>
             {sub && <div className="kpi-sub">{sub}</div>}
             {src && <div className="kpi-src">📊 <SourceText text={src} /></div>}
           </>
@@ -43,7 +44,7 @@ export function KpiCard({ title, value, sub, status = 'none', bg, src,
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: dot }} />
             {STATUS_TH[status] || '—'}
           </span>
-          <div className="dt-value" style={{ color: dot }}>{value}</div>
+          <div className="dt-value" style={{ color: vColor }}>{value}</div>
           {sub && <div className="dt-sub">{sub}</div>}
         </div>
 

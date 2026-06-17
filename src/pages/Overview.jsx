@@ -122,6 +122,7 @@ export function Overview({ branchId = 'default', onTab }) {
         <KpiCard bg={DAILY_BG}
           title="กำไรขั้นต้น (วันนี้)"
           value={thb(t.grossProfit)}
+          valueColor={t.grossProfit < 0 ? STATUS_COLORS.red : POS_GREEN}
           sub={`${pctStr(gpPct)} ของยอดขาย`}
           status={t.net > 0 ? grossDailyStatus(gpPct) : 'none'}
           src="Daily Income · Inventory"
@@ -129,7 +130,7 @@ export function Overview({ branchId = 'default', onTab }) {
           rows={[
             { label: 'ยอดขายสุทธิ (Daily Income)', value: thb(t.net) },
             { label: 'ต้นทุนวัตถุดิบ (Inventory)', value: thb(t.cogs) },
-            { label: 'กำไรขั้นต้น', value: thb(t.grossProfit), color: STATUS_COLORS.green },
+            { label: 'กำไรขั้นต้น', value: thb(t.grossProfit), color: t.grossProfit < 0 ? STATUS_COLORS.red : POS_GREEN },
             { label: 'คิดเป็น %', value: pctStr(gpPct) },
           ]}
           legend="🟢 ≥54% · 🟡 50–54% · 🔴 <50% (รายวัน)"
@@ -245,6 +246,7 @@ export function Overview({ branchId = 'default', onTab }) {
 const monthHint = 'ยังไม่ได้กรอกข้อมูลเดือนนี้'
 
 // สีพื้นพาสเทลแยกกลุ่ม
+const POS_GREEN = '#22C55E'  // เขียวอ่อน — กำไรเป็นบวก (ติดลบ = แดง)
 const DAILY_BG = '#EAF1FC'   // ฟ้าพาสเทล — รายวัน
 const MONTH_BG = '#F2ECFB'   // ม่วงลาเวนเดอร์ — รายเดือน
 const INVEST_BG = '#FCF1E3'  // พีช-ทอง — การลงทุน
