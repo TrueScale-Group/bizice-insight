@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { db } from '../firebase'
+import { doc, getDoc, collection, onSnapshot, query, where, documentId } from 'firebase/firestore'
+import { COL } from '../constants/collections'
 import { useMonthlyInsight, currentMonthKey } from '../hooks/useMonthlyInsight'
 import { Accordion, NumField } from '../components/Accordion'
 import { thb, pctStr, STATUS_COLORS } from '../utils/calc'
@@ -7,6 +10,18 @@ import { toThaiMonth } from '../utils/formatDate'
 // monthKey "YYYYMM" ↔ input[type=month] "YYYY-MM"
 const toInput = (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}`
 const fromInput = (v) => v.replace('-', '')
+
+// ── back-fill helpers ──
+const STORE_OPEN = '202509'   // ร้านเปิด 09/2025
+const TH_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+const chipLabel = (k) => `${TH_MON[+k.slice(4, 6) - 1]} ${(+k.slice(0, 4) + 543) % 100}`   // เช่น "ก.ย. 68"
+const prevKey = (k) => { let y = +k.slice(0, 4), m = +k.slice(4, 6) - 1; if (m < 1) { m = 12; y-- } return `${y}${String(m).padStart(2, '0')}` }
+function monthsFrom(startKey, endKey) {
+  const out = []; let y = +startKey.slice(0, 4), m = +startKey.slice(4, 6)
+  const ey = +endKey.slice(0, 4), em = +endKey.slice(4, 6)
+  while (y < ey || (y === ey && m <= em)) { out.push(`${y}${String(m).padStart(2, '0')}`); m++; if (m > 12) { m = 1; y++ } }
+  return out
+}
 
 const L_FIELDS = [
   ['salary', 'เงินเดือนประจำ'], ['daily', 'รายวัน'], ['pt', 'พาร์ทไทม์ (PT)'],
@@ -20,9 +35,38 @@ const O_FIELDS = [
 
 export function DataEntry({ branchId = 'default', onClose }) {
   const [monthKey, setMonthKey] = useState(currentMonthKey())
-  const { loading, monthly, indices, revenueMonthNet, cogsMonth, usingRevOverride, usingCogsOverride, isCurrentMonth, save } = useMonthlyInsight(branchId, monthKey)
+  const { loading, monthly, indices, revenueMonthNet, cogsMonth, annualFeeMonthly, usingRevOverride, usingCogsOverride, isCurrentMonth, save } = useMonthlyInsight(branchId, monthKey)
   const [draft, setDraft] = useState({})
-  const [saved, setSaved] = useState(false)
+  const [toast, setToast] = useState('')
+  const [filled, setFilled] = useState(new Set())   // เดือนที่กรอกข้อมูลแล้ว (มี doc)
+
+  // โหลดรายชื่อเดือนที่กรอกแล้ว (ติ๊กเขียวบนแถบเดือน)
+  useEffect(() => {
+    const lo = `${branchId}_000000`, hi = `${branchId}_999999`
+    const unsub = onSnapshot(
+      query(collection(db, COL.MONTHLY_DATA), where(documentId(), '>=', lo), where(documentId(), '<=', hi)),
+      s => { const set = new Set(); s.forEach(d => set.add(d.id.slice(-6))); setFilled(set) },
+      () => {}
+    )
+    return unsub
+  }, [branchId])
+
+  // คัดลอกค่าประจำ (ค่าเช่า/ค่าแรง/การตลาด/Opex/ดอกเบี้ย) จากเดือนก่อน — ไม่แตะยอดขาย/ต้นทุนของเดือนนี้
+  async function copyPrevMonth() {
+    const pk = prevKey(monthKey)
+    const snap = await getDoc(doc(db, COL.MONTHLY_DATA, `${branchId}_${pk}`))
+    if (!snap.exists()) { setToast(`⚠️ เดือน ${chipLabel(pk)} ยังไม่มีข้อมูล`); setTimeout(() => setToast(''), 2000); return }
+    const M = snap.data()
+    setDraft(d => ({
+      ...d,   // คงยอดขาย/ต้นทุน override ของเดือนนี้ไว้
+      rentCost: M.rentCost, openDays: M.openDays,
+      ...(M.labor || {}),
+      mktReal: M.mktReal, mktPromoEst: M.mktPromoEst, mktPromoNote: M.mktPromoNote || '',
+      ...O_FIELDS.reduce((a, [k]) => ({ ...a, [k]: M[k] }), {}),
+      interestExpense: M.interestExpense,
+    }))
+    setToast(`📋 คัดลอกจาก ${chipLabel(pk)} แล้ว · กดบันทึกเพื่อยืนยัน`); setTimeout(() => setToast(''), 2400)
+  }
 
   // seed draft จาก doc เมื่อเปลี่ยนเดือน/โหลดเสร็จ
   useEffect(() => {
@@ -54,8 +98,10 @@ export function DataEntry({ branchId = 'default', onClose }) {
       ...O_FIELDS.reduce((a, [k]) => ({ ...a, [k]: +draft[k] || 0 }), {}),
     }
     await save(patch)
-    setSaved(true); setTimeout(() => setSaved(false), 1800)
+    setToast('✓ บันทึกแล้ว'); setTimeout(() => setToast(''), 1800)
   }
+
+  const monthList = monthsFrom(STORE_OPEN, currentMonthKey())
 
   return (
     <div className="overlay">
@@ -70,15 +116,30 @@ export function DataEntry({ branchId = 'default', onClose }) {
 
       <main className="ptr-scroll">
         <div className="page">
-          {saved && <div className="toast-ok">✓ บันทึกแล้ว</div>}
+          {toast && <div className="toast-ok">{toast}</div>}
 
-          {/* เลือกเดือน — กรอกล่วงหน้า/ย้อนหลังได้ */}
-          <label className="fld">
-            <span className="fld-label">เดือน (กรอกล่วงหน้า/ย้อนหลังได้)</span>
-            <div className="fld-input">
-              <input type="month" value={toInput(monthKey)} onChange={e => e.target.value && setMonthKey(fromInput(e.target.value))} />
-            </div>
-          </label>
+          {/* แถบเดือนย้อนหลัง — ติ๊กเขียว = กรอกแล้ว (ตั้งแต่เปิดร้าน 09/2025) */}
+          <div className="fld-label" style={{ marginBottom: 4 }}>เลือกเดือน (✓ = กรอกแล้ว)</div>
+          <div className="month-strip">
+            {monthList.map(k => (
+              <button key={k} className={`month-chip ${k === monthKey ? 'sel' : ''} ${filled.has(k) ? 'filled' : ''}`}
+                onClick={() => setMonthKey(k)}>
+                {filled.has(k) && <span className="mc-check">✓</span>}
+                {chipLabel(k)}
+              </button>
+            ))}
+          </div>
+
+          {/* เลือกเดือน (ปฏิทิน) + ปุ่มคัดลอกเดือนก่อน */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <label className="fld" style={{ flex: 1 }}>
+              <span className="fld-label">หรือเลือกจากปฏิทิน</span>
+              <div className="fld-input">
+                <input type="month" value={toInput(monthKey)} onChange={e => e.target.value && setMonthKey(fromInput(e.target.value))} />
+              </div>
+            </label>
+            <button className="copy-prev-btn" onClick={copyPrevMonth} title="คัดลอกค่าประจำจากเดือนก่อน">📋 คัดลอกเดือนก่อน</button>
+          </div>
 
           {/* preview ยอดขาย/ต้นทุน + ที่มา */}
           <div className="card" style={{ padding: 12 }}>
@@ -116,7 +177,7 @@ export function DataEntry({ branchId = 'default', onClose }) {
           </Accordion>
 
           <Accordion title="ค่าดำเนินงานอื่น (Opex)" icon="🧾" badge={indices ? pctStr(indices.opex.pct) : null}>
-            <p className="acc-note">ค่าเช่าดึงจากตั้งค่า · ค่าแรง+การตลาดรวมให้อัตโนมัติ</p>
+            <p className="acc-note">ค่าเช่าดึงจากตั้งค่า · ค่าแรง+การตลาดรวมให้อัตโนมัติ{annualFeeMonthly > 0 ? ` · ธรรมเนียมรายปี ${thb(annualFeeMonthly)}/เดือน รวมให้แล้ว` : ''}</p>
             {O_FIELDS.map(([k, label]) => <NumField key={k} label={label} value={draft[k]} onChange={set(k)} />)}
           </Accordion>
 

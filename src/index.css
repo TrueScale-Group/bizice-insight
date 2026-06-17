@@ -348,6 +348,28 @@ html, body, #root {
 .set-foot-ver { font-size: 11px; color: var(--txt3); display: flex; align-items: center; gap: 6px; }
 .set-ver-pill { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; font-weight: 700; font-size: 10.5px; color: var(--txt2); }
 
+/* ── แถบเดือนย้อนหลัง (DataEntry) ── */
+.month-strip {
+  display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; margin-bottom: 6px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+}
+.month-chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px;
+  border: 1px solid var(--border); background: var(--surf); color: var(--txt2);
+  border-radius: 20px; padding: 5px 11px; font-family: 'Prompt'; font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+}
+.month-chip.filled { background: var(--green-bg); border-color: #B6E0C2; color: #1A7F37; }
+.month-chip.sel { border-color: var(--red); color: var(--red); box-shadow: 0 0 0 1px var(--red) inset; }
+.month-chip.sel.filled { background: #FFF; }
+.mc-check { font-size: 10px; }
+.copy-prev-btn {
+  flex: 0 0 auto; border: 1px solid var(--red); background: #fff; color: var(--red);
+  border-radius: 9px; padding: 9px 12px; font-family: 'Prompt'; font-size: 12.5px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; height: 40px;
+}
+.copy-prev-btn:active { background: var(--red); color: #fff; }
+
 /* ── Form field ── */
 .fld { display: flex; flex-direction: column; gap: 4px; }
 .fld-label { font-size: 12.5px; color: var(--txt2); font-weight: 500; }

@@ -35,13 +35,13 @@ function currentMonthKey() {
 export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthKey()) {
   const [loading, setLoading] = useState(true)
   const [state, setState] = useState(null)
-  const store = useRef({ cfg: DEFAULT_CONFIG, monthly: {}, gross: {}, cogs: {}, prevGross: {}, written: new Set() })
+  const store = useRef({ cfg: DEFAULT_CONFIG, monthly: {}, prevMonthly: {}, gross: {}, cogs: {}, prevGross: {}, written: new Set() })
 
   useEffect(() => {
     const { from, to, y, m, daysInMonth } = monthRange(monthKey)
     const pk = prevMonthKey(monthKey)
     const pr = monthRange(pk)
-    store.current = { cfg: DEFAULT_CONFIG, monthly: {}, gross: {}, cogs: {}, prevGross: {}, written: new Set() }
+    store.current = { cfg: DEFAULT_CONFIG, monthly: {}, prevMonthly: {}, gross: {}, cogs: {}, prevGross: {}, written: new Set() }
 
     function recompute() {
       const c = store.current.cfg
@@ -60,7 +60,12 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       // ค่าเช่า/วันเปิด: ต่อเดือนก่อน (ว่าง = ใช้ค่าใน Settings)
       const monthRent = (M.rentCost != null && M.rentCost !== '') ? num(M.rentCost) : num(c.rentCost)
       const monthOpenDays = num(M.openDays) > 0 ? num(M.openDays) : c.openDays
-      const prevGrossMonth = Object.values(store.current.prevGross).reduce((s, v) => s + num(v), 0)
+      // ยอดเดือนก่อน (สำหรับงบการตลาด forward): ใช้ override ของเดือนก่อนถ้ามี (เดือนย้อนหลังที่กรอกเอง) ก่อนค่อย fallback แอพ
+      const PM = store.current.prevMonthly
+      const prevOverride = num(PM.revenueGrossOverride)
+      const prevGrossMonth = prevOverride > 0
+        ? prevOverride
+        : Object.values(store.current.prevGross).reduce((s, v) => s + num(v), 0)
       let prevRevenueNet = netRevenue(prevGrossMonth, vat)
       if (prevRevenueNet <= 0) prevRevenueNet = num(c.firstMonthRevenueEst)
 
@@ -72,8 +77,9 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       const mktPct = ratio(mkt, revenueMonthNet)
       const budget = marketingBudget(prevRevenueNet, c)
       const mktRemaining = budget.ceiling - mkt
+      const annualFeeMonthly = num(c.annualFeeYearly) / 12   // ธรรมเนียมแฟรนไชส์รายปี → เฉลี่ย/เดือน เข้า P&L
       const opex = opexTotal({
-        labor, marketing: mkt, rent: monthRent,
+        labor, marketing: mkt, rent: monthRent, annualFee: annualFeeMonthly,
         utility: num(M.opexUtility), maintenance: num(M.opexMaintenance),
         supplies: num(M.opexSupplies), paymentFee: num(M.opexPaymentFee),
         royalty: num(M.opexRoyalty), commission: num(M.opexCommission), misc: num(M.opexMisc),
@@ -115,7 +121,7 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
 
       setState({
         cfg: c, monthly: M, revenueMonthNet, grossMonth, cogsMonth, prevRevenueNet, fcPct, isCurrentMonth, bep,
-        usingRevOverride, usingCogsOverride, monthRent,
+        usingRevOverride, usingCogsOverride, monthRent, annualFeeMonthly,
         indices: {
           labor: { value: labor, pct: laborPct, headroom, status: isCurrentMonth ? 'none' : laborStatus(laborPct, c) },
           marketing: { value: mkt, pct: mktPct, budget, remaining: mktRemaining, status: isCurrentMonth ? 'none' : marketingStatus(mktPct, c) },
@@ -154,6 +160,9 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       }, recompute),
       onSnapshot(doc(db, COL.MONTHLY_DATA, `${branchId}_${monthKey}`), s => {
         store.current.monthly = s.exists() ? s.data() : {}; recompute()
+      }, recompute),
+      onSnapshot(doc(db, COL.MONTHLY_DATA, `${branchId}_${pk}`), s => {
+        store.current.prevMonthly = s.exists() ? s.data() : {}; recompute()
       }, recompute),
       onSnapshot(query(collection(db, COL.INCOME_RECORDS),
         where(documentId(), '>=', from), where(documentId(), '<=', to)), s => {

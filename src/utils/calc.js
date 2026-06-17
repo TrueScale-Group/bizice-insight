@@ -156,10 +156,10 @@ export function marketingSpent(real = 0, promoEst = 0) {
   return safe(real) + safe(promoEst)
 }
 
-// Opex = SG&A เต็ม (รวม labor + marketing) — ตัด depreciation v1
+// Opex = SG&A เต็ม (รวม labor + marketing + ธรรมเนียมรายปี/12) — ตัด depreciation v1
 export function opexTotal(parts = {}) {
   return ['labor', 'marketing', 'rent', 'utility', 'maintenance', 'supplies',
-    'paymentFee', 'royalty', 'commission', 'misc'].reduce((s, k) => s + safe(parts[k]), 0)
+    'paymentFee', 'royalty', 'commission', 'misc', 'annualFee'].reduce((s, k) => s + safe(parts[k]), 0)
 }
 
 // กำไร: EBIT = ยอดขาย − ต้นทุนวัตถุดิบ − Opex · EBT = EBIT − ดอกเบี้ย
