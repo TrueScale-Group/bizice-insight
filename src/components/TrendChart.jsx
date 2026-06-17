@@ -10,7 +10,7 @@ const fmtFull = (v, suffix) => suffix === '%'
   : `฿${Math.round(v).toLocaleString('th-TH')}`
 // ยอดย่อบนหัวแท่ง: % = ตัวเลขตรง · เงิน = พันใช้ k
 const fmtTop = (v, suffix) => {
-  if (suffix === '%') return `${Math.round(v)}`
+  if (suffix === '%') return `${(+v).toFixed(1)}`
   const a = Math.abs(v)
   if (a >= 1000) return `${(v / 1000).toFixed(1)}k`
   return `${Math.round(v)}`

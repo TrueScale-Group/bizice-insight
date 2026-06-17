@@ -12,7 +12,7 @@ const STATUS_TH = { blue: 'ดีเยี่ยม', green: 'ดี', yellow: '
  *        formula · rows[{label,value}] · legend · trend · trendColor · pending
  */
 export function KpiCard({ title, value, sub, status = 'none', bg, src,
-  formula, rows, legend, trend, trendColor, pending = false, valueColor }) {
+  formula, rows, legend, trend, trendColor, pending = false, valueColor, customBody }) {
   const [open, setOpen] = useState(false)
   const dot = STATUS_COLORS[status] || STATUS_COLORS.none
   const vColor = valueColor || dot   // สีตัวเลขค่า (override ได้ เช่น กำไรติดลบ=แดง)
@@ -71,7 +71,9 @@ export function KpiCard({ title, value, sub, status = 'none', bg, src,
             ))}
           </div>
         )}
-        {trend && trend.length > 0 && (
+        {customBody ? (
+          <div className="dt-section">{customBody}</div>
+        ) : trend && trend.length > 0 && (
           <div className="dt-section">
             <div className="dt-label">แนวโน้ม</div>
             <TrendChart data={trend} color={trendColor || dot} />

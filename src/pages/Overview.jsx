@@ -3,6 +3,7 @@ import { useInsightData } from '../hooks/useInsightData'
 import { useMonthlyInsight } from '../hooks/useMonthlyInsight'
 import { BepGauge } from '../components/BepGauge'
 import { KpiCard } from '../components/KpiCard'
+import { FoodCostPanel } from '../components/FoodCostPanel'
 import { Modal } from '../components/Modal'
 import {
   bepProgressPct, bepStatus, grossProfitPct, grossDailyStatus,
@@ -149,9 +150,7 @@ export function Overview({ branchId = 'default', onTab }) {
             { label: 'ยอดขายวันนี้ (Daily Income)', value: thb(t.net) },
             { label: 'เฉลี่ย 30 วัน', value: pctStr(avgFoodCostPct) },
           ]}
-          legend="🟢 ≤45% · 🟡 45–48% · 🔴 >48%"
-          trend={trendOf(d => +d.foodCostPct.toFixed(1))}
-          trendColor={STATUS_COLORS.red}
+          customBody={<FoodCostPanel series={series} />}
         />
         <KpiCard bg={DAILY_BG}
           title="ยอดขายสุทธิ (วันนี้)"
