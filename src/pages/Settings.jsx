@@ -25,6 +25,7 @@ export function Settings({ branchId = 'default' }) {
   const [draft, setDraft] = useState(cfg)
   const [modal, setModal] = useState(null)   // section id
   const [saved, setSaved] = useState('')
+  const [nowTime] = useState(() => new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }))
 
   useEffect(() => { setDraft(cfg) }, [loading, branchId]) // eslint-disable-line
   const set = (k) => (v) => setDraft(d => ({ ...d, [k]: v }))
@@ -46,8 +47,10 @@ export function Settings({ branchId = 'default' }) {
       {saved && <div className="toast-ok">✓ บันทึก {saved} แล้ว</div>}
 
       <div className="set-subbar">ตั้งค่า</div>
+      <div className="set-subbar-time">อัปเดตล่าสุด {nowTime} น.</div>
 
       {/* กลุ่ม: ข้อมูล & ต้นทุน */}
+      <div className="section-label">ข้อมูล & ต้นทุน</div>
       <div className="set-card">
         <SettingRow icon="🏬" title="จัดการสาขา" desc={`${branches.length} สาขา`} onClick={() => setModal('branchList')} />
         <SettingRow icon="🏪" title="ข้อมูลสาขา" desc={draft.branchName || 'Mixue'} onClick={() => setModal('branch')} />
@@ -55,7 +58,8 @@ export function Settings({ branchId = 'default' }) {
         <SettingRow icon="🏠" title="ต้นทุนคงที่" onClick={() => setModal('fixed')} />
       </div>
 
-      {/* กลุ่ม: เกณฑ์ & นิยาม */}
+      {/* กลุ่ม: เกณฑ์ & การเชื่อมต่อ */}
+      <div className="section-label">เกณฑ์ & การเชื่อมต่อ</div>
       <div className="set-card">
         <SettingRow icon="🚦" title="เกณฑ์ไฟสถานะ" onClick={() => setModal('threshold')} />
         <SettingRow icon="📐" title="นิยามกำไร & การเตือน" onClick={() => setModal('profit')} />

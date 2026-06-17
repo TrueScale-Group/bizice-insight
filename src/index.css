@@ -316,20 +316,26 @@ html, body, #root {
 .grp { font-family: 'Prompt'; font-weight: 600; font-size: 12px; color: var(--txt3); margin-top: 6px; }
 
 /* ── Settings (สไตล์ Inventory) ── */
-.set-subbar { font-family: 'Prompt'; font-weight: 700; font-size: 20px; padding: 2px 2px 4px; }
+.set-subbar { font-family: 'Prompt'; font-weight: 700; font-size: 16px; color: var(--txt); padding: 2px 2px 0; }
+.set-subbar-time { font-size: 11px; color: var(--txt3); font-weight: 400; margin: 2px 0 2px; }
+.section-label {
+  font-size: 11px; font-weight: 700; color: var(--txt3);
+  text-transform: uppercase; letter-spacing: 0.07em; padding: 0 2px; margin: 14px 0 6px;
+}
 .set-card { background: var(--surf); border-radius: var(--rl); box-shadow: var(--sh); overflow: hidden; }
 .setting-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+  padding: 6px 14px; border-bottom: 1px solid var(--border); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .setting-row:last-child { border-bottom: none; }
 .setting-row:active { background: var(--bg); }
-.setting-left { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.setting-icon { font-size: 19px; flex-shrink: 0; }
-.setting-title { font-family: 'Prompt'; font-size: 15px; font-weight: 600; color: var(--txt); }
+.setting-left { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.setting-icon { font-size: 16px; flex-shrink: 0; }
+.setting-title { font-family: 'Prompt'; font-size: 13px; font-weight: 600; color: var(--txt); }
 .setting-right-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .setting-desc { font-size: 11.5px; color: var(--txt3); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.setting-arrow { color: #C7C7CC; font-size: 18px; }
+.setting-arrow { color: var(--txt3); font-size: 14px; }
 .set-footer { padding: 24px 1rem 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .set-foot-name { font-size: 12px; color: var(--txt3); font-weight: 600; }
 .set-foot-ver { font-size: 11px; color: var(--txt3); display: flex; align-items: center; gap: 6px; }
