@@ -18,16 +18,10 @@ export function KpiCard({ title, value, sub, status = 'none', bg, src,
   const vColor = valueColor || dot   // สีตัวเลขค่า (override ได้ เช่น กำไรติดลบ=แดง)
   const clickable = !pending
 
-  // เปิดรายละเอียดเมื่อ "วางเมาส์ทิ้งไว้" (เฉพาะ PC ที่มี hover จริง) — มือถือใช้แตะ
-  const canHover = typeof window !== 'undefined' &&
-    window.matchMedia && window.matchMedia('(hover: hover)').matches
-  const onEnter = () => { if (clickable && canHover) setOpen(true) }
-
   return (
     <>
       <div className="kpi-card"
         onClick={() => clickable && setOpen(true)}
-        onMouseEnter={onEnter}
         style={{ cursor: clickable ? 'pointer' : 'default', background: bg || undefined }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className="kpi-dot" style={{ background: dot }} />
