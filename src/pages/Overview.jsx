@@ -238,21 +238,6 @@ export function Overview({ branchId = 'default', onTab }) {
       </div>
       </div>
 
-      {/* ── กลุ่ม การลงทุน (พีช-ทองพาสเทล) ── */}
-      <div className="grp-box" style={{ borderColor: INVEST_BD }}>
-      <div className="grp-head"><span className="grp-bar" style={{ background: INVEST_BD }} />💎 การลงทุน</div>
-      <div className="kpi-grid">
-        <div className="kpi-card" style={{ background: INVEST_BG, cursor: 'pointer' }} onClick={() => onTab && onTab('roi')}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="kpi-dot" style={{ background: STATUS_COLORS.none }} />
-            <span className="kpi-title">ROI / ROE</span>
-            <span style={{ marginLeft: 'auto', color: '#C7C7CC', fontSize: 13 }}>›</span>
-          </div>
-          <div className="kpi-value" style={{ fontSize: 15, color: 'var(--txt2)' }}>ดูแท็บ ROI-ROE</div>
-          <div className="kpi-sub">คืนทุน · ROI · Investor calc</div>
-        </div>
-      </div>
-      </div>
     </div>
   )
 }
