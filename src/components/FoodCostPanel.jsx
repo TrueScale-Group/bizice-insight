@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { STATUS_COLORS, hubFoodCostDaily, hubFoodCostStats, foodCostStatus } from '../utils/calc'
 
+const TODAY_GRAY = '#9CA3AF'   // วันนี้ยังไม่จบวัน = เทา
 const TH_DOW = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
 const dow = (k) => TH_DOW[new Date(k + 'T00:00:00').getDay()]
 const dayNum = (k) => +k.slice(8, 10)
@@ -40,7 +41,7 @@ export function FoodCostPanel({ series = [] }) {
 
   const barColor = (p, isToday) => {
     if (p === null) return '#E5E7EB'                 // ไม่มีข้อมูล
-    if (isToday) return STATUS_COLORS.yellow          // วันนี้ยังไม่จบ = เหลือง
+    if (isToday) return TODAY_GRAY                    // วันนี้ยังไม่จบ = เทา
     return STATUS_COLORS[foodCostStatus(p)]
   }
 
@@ -82,7 +83,7 @@ export function FoodCostPanel({ series = [] }) {
               )}
               {isWeek && (
                 <text x={cx} y={H - 7} textAnchor="middle" fontSize="9" fontFamily="Sarabun"
-                  fontWeight={isToday ? 700 : 400} fill={isToday ? STATUS_COLORS.yellow : '#9A9A9A'}>{dow(d.dateKey)}</text>
+                  fontWeight={isToday ? 700 : 400} fill={isToday ? TODAY_GRAY : '#9A9A9A'}>{dow(d.dateKey)}</text>
               )}
             </g>
           )
@@ -97,11 +98,11 @@ export function FoodCostPanel({ series = [] }) {
         {/* 30 วัน: บอกช่วงวันที่หัว-ท้าย */}
         {!isWeek && bars.length > 0 && <>
           <text x={padX} y={H - 6} fontSize="8" fill="#9A9A9A" fontFamily="Sarabun">{dayNum(bars[0].dateKey)}</text>
-          <text x={W - padX} y={H - 6} textAnchor="end" fontSize="8" fill={STATUS_COLORS.yellow} fontFamily="Sarabun" fontWeight="700">{dayNum(bars[lastIdx].dateKey)} (วันนี้)</text>
+          <text x={W - padX} y={H - 6} textAnchor="end" fontSize="8" fill={TODAY_GRAY} fontFamily="Sarabun" fontWeight="700">{dayNum(bars[lastIdx].dateKey)} (วันนี้)</text>
         </>}
       </svg>
 
-      <div className="fc-legend">🟢 &lt;42% · 🟡 42–47% (หรือวันนี้ยังไม่จบ) · 🔴 ≥47% · ฐานยอดรวม VAT (ตรงกับ Hub)</div>
+      <div className="fc-legend">🟢 &lt;42% · 🟡 42–47% · 🔴 ≥47% · ⚪ วันนี้ยังไม่จบ · ฐานยอดรวม VAT (ตรงกับ Hub)</div>
     </div>
   )
 }
