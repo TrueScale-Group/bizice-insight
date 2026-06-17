@@ -49,9 +49,17 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       const vat = c.vatRate
       const gross = store.current.gross, cogs = store.current.cogs
 
-      const grossMonth = Object.values(gross).reduce((s, v) => s + num(v), 0)
+      // ยอดขาย/ต้นทุน: ใช้ override ที่กรอกมือก่อน (สำหรับเดือนย้อนหลังที่ Daily Income/Inventory ไม่มีข้อมูล)
+      const grossFromApp = Object.values(gross).reduce((s, v) => s + num(v), 0)
+      const usingRevOverride = num(M.revenueGrossOverride) > 0
+      const grossMonth = usingRevOverride ? num(M.revenueGrossOverride) : grossFromApp
       const revenueMonthNet = netRevenue(grossMonth, vat)
-      const cogsMonth = Object.values(cogs).reduce((s, v) => s + num(v), 0)
+      const cogsFromApp = Object.values(cogs).reduce((s, v) => s + num(v), 0)
+      const usingCogsOverride = num(M.cogsOverride) > 0
+      const cogsMonth = usingCogsOverride ? num(M.cogsOverride) : cogsFromApp
+      // ค่าเช่า/วันเปิด: ต่อเดือนก่อน (ว่าง = ใช้ค่าใน Settings)
+      const monthRent = (M.rentCost != null && M.rentCost !== '') ? num(M.rentCost) : num(c.rentCost)
+      const monthOpenDays = num(M.openDays) > 0 ? num(M.openDays) : c.openDays
       const prevGrossMonth = Object.values(store.current.prevGross).reduce((s, v) => s + num(v), 0)
       let prevRevenueNet = netRevenue(prevGrossMonth, vat)
       if (prevRevenueNet <= 0) prevRevenueNet = num(c.firstMonthRevenueEst)
@@ -65,7 +73,7 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       const budget = marketingBudget(prevRevenueNet, c)
       const mktRemaining = budget.ceiling - mkt
       const opex = opexTotal({
-        labor, marketing: mkt, rent: c.rentCost,
+        labor, marketing: mkt, rent: monthRent,
         utility: num(M.opexUtility), maintenance: num(M.opexMaintenance),
         supplies: num(M.opexSupplies), paymentFee: num(M.opexPaymentFee),
         royalty: num(M.opexRoyalty), commission: num(M.opexCommission), misc: num(M.opexMisc),
@@ -79,8 +87,8 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
       const isCurrentMonth = monthKey === currentMonthKey()
 
       // ── BEP 5 มิติ ──
-      const fixedMonthly = num(c.rentCost) + num(c.annualFeeYearly) / 12 + labor
-      const bDaily = bepDaily(fixedMonthly, fcPct, c.openDays)
+      const fixedMonthly = monthRent + num(c.annualFeeYearly) / 12 + labor
+      const bDaily = bepDaily(fixedMonthly, fcPct, monthOpenDays)
       const bMonthly = bepMonthly(fixedMonthly, fcPct)
       // daily series ของเดือน (เฉพาะวันมีข้อมูล) เรียงตามวัน
       const dayRows = [...new Set([...Object.keys(gross), ...Object.keys(cogs)])].sort()
@@ -107,6 +115,7 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
 
       setState({
         cfg: c, monthly: M, revenueMonthNet, grossMonth, cogsMonth, prevRevenueNet, fcPct, isCurrentMonth, bep,
+        usingRevOverride, usingCogsOverride, monthRent,
         indices: {
           labor: { value: labor, pct: laborPct, headroom, status: isCurrentMonth ? 'none' : laborStatus(laborPct, c) },
           marketing: { value: mkt, pct: mktPct, budget, remaining: mktRemaining, status: isCurrentMonth ? 'none' : marketingStatus(mktPct, c) },

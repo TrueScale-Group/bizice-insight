@@ -20,7 +20,7 @@ const O_FIELDS = [
 
 export function DataEntry({ branchId = 'default', onClose }) {
   const [monthKey, setMonthKey] = useState(currentMonthKey())
-  const { loading, monthly, indices, revenueMonthNet, isCurrentMonth, save } = useMonthlyInsight(branchId, monthKey)
+  const { loading, monthly, indices, revenueMonthNet, cogsMonth, usingRevOverride, usingCogsOverride, isCurrentMonth, save } = useMonthlyInsight(branchId, monthKey)
   const [draft, setDraft] = useState({})
   const [saved, setSaved] = useState(false)
 
@@ -29,6 +29,8 @@ export function DataEntry({ branchId = 'default', onClose }) {
     if (loading) return
     const M = monthly || {}
     setDraft({
+      revenueGrossOverride: M.revenueGrossOverride, cogsOverride: M.cogsOverride,
+      rentCost: M.rentCost, openDays: M.openDays,
       ...M.labor, // salary/daily/pt/ot/bonus
       mktReal: M.mktReal, mktPromoEst: M.mktPromoEst, mktPromoNote: M.mktPromoNote || '',
       ...O_FIELDS.reduce((a, [k]) => ({ ...a, [k]: M[k] }), {}),
@@ -40,6 +42,10 @@ export function DataEntry({ branchId = 'default', onClose }) {
 
   async function handleSave() {
     const patch = {
+      revenueGrossOverride: +draft.revenueGrossOverride || 0,
+      cogsOverride: +draft.cogsOverride || 0,
+      rentCost: draft.rentCost === '' || draft.rentCost == null ? null : +draft.rentCost,
+      openDays: +draft.openDays || 0,
       labor: L_FIELDS.reduce((a, [k]) => ({ ...a, [k]: +draft[k] || 0 }), {}),
       mktReal: +draft.mktReal || 0,
       mktPromoEst: +draft.mktPromoEst || 0,
@@ -74,14 +80,25 @@ export function DataEntry({ branchId = 'default', onClose }) {
             </div>
           </label>
 
-          {/* preview ยอดขายสุทธิเดือน */}
+          {/* preview ยอดขาย/ต้นทุน + ที่มา */}
           <div className="card" style={{ padding: 12 }}>
-            <div className="card-label" style={{ textAlign: 'left' }}>ยอดขายสุทธิเดือนนี้ (จาก Daily Income)</div>
+            <div className="card-label" style={{ textAlign: 'left' }}>ยอดขายสุทธิเดือนนี้
+              {' · '}<b style={{ color: usingRevOverride ? '#1E3A8A' : '#1A7F37' }}>{usingRevOverride ? 'กรอกเอง' : 'Daily Income'}</b></div>
             <div style={{ fontFamily: 'Prompt', fontWeight: 700, fontSize: 20, color: '#1D4ED8' }}>{thb(revenueMonthNet)}</div>
+            <div className="kpi-sub">ต้นทุนวัตถุดิบ {thb(cogsMonth)} · <b style={{ color: usingCogsOverride ? '#1E3A8A' : '#1A7F37' }}>{usingCogsOverride ? 'กรอกเอง' : 'Inventory'}</b></div>
             {isCurrentMonth && <div className="kpi-sub">⏳ เดือนปัจจุบัน — ไฟสถานะขึ้นตอนจบเดือน</div>}
           </div>
 
-          <Accordion title="ค่าแรง" icon="👥" defaultOpen
+          {/* ⭐ ย้อนหลัง: กรอกยอดขาย/ต้นทุน/ค่าเช่า เองได้ (เดือนที่แอพอื่นไม่มีข้อมูล) */}
+          <Accordion title="ยอดขาย / ต้นทุน / ค่าเช่า (ย้อนหลัง)" icon="🗂️" defaultOpen={!isCurrentMonth}>
+            <p className="acc-note">📌 สำหรับเดือนย้อนหลังที่ <b>Daily Income / Inventory ยังไม่มีข้อมูล</b> (เช่นก่อนเริ่มใช้ระบบ) — กรอกยอดรวมเองได้ · <b>เว้นว่าง/0 = ใช้ข้อมูลจริงจากแอพอัตโนมัติ</b></p>
+            <NumField label="ยอดขายรวมเดือน (รวม VAT)" value={draft.revenueGrossOverride} onChange={set('revenueGrossOverride')} hint="กรอกเมื่อไม่มีใน Daily Income" />
+            <NumField label="ต้นทุนวัตถุดิบรวมเดือน" value={draft.cogsOverride} onChange={set('cogsOverride')} hint="กรอกเมื่อไม่มีใน Inventory" />
+            <NumField label="ค่าเช่าเดือนนี้" value={draft.rentCost} onChange={set('rentCost')} hint="ว่าง = ใช้ค่าในตั้งค่า" />
+            <NumField label="วันเปิดเดือนนี้" value={draft.openDays} unit="วัน" onChange={set('openDays')} hint="0 = ใช้ค่าตั้งค่า (เดือนเปิด 09/2025 อาจไม่ครบ)" />
+          </Accordion>
+
+          <Accordion title="ค่าแรง" icon="👥"
             badge={indices ? pctStr(indices.labor.pct) : null}>
             <p className="acc-note">ไม่นับเงินเดือนเจ้าของ · ระบบบวกประกันสังคมนายจ้าง 5% ให้อัตโนมัติ</p>
             {L_FIELDS.map(([k, label]) => <NumField key={k} label={label} value={draft[k]} onChange={set(k)} />)}
