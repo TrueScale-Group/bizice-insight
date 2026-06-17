@@ -16,6 +16,7 @@ const fmtTop = (v, suffix) => {
   return `${Math.round(v)}`
 }
 const shortTick = (label) => (label || '').split(' ')[0]   // เลขวัน หรือเดือนย่อ
+const TODAY_PINK = '#EC4899'   // แท่งขวาสุด = วันปัจจุบัน
 
 export function TrendChart({ data = [], color = '#E31E24', suffix = '' }) {
   const [active, setActive] = useState(data.length - 1)   // เริ่มเลือกแท่งล่าสุด
@@ -29,6 +30,12 @@ export function TrendChart({ data = [], color = '#E31E24', suffix = '' }) {
   const bw = (W - padX * 2) / data.length
   const showLabels = data.length <= 14   // แท่งเยอะเกินไม่ใส่ป้ายทุกแท่ง (รก)
   const sel = data[Math.min(active, data.length - 1)] || data[data.length - 1]
+  const lastIdx = data.length - 1
+
+  // เส้นค่าเฉลี่ย N วัน
+  const avg = data.reduce((s, d) => s + d.value, 0) / data.length
+  const avgY = padTop + (plotH - (Math.max(avg, 0) / max) * plotH)
+  const avgLabel = suffix === '%' ? `avg ${avg.toFixed(1)}%` : `avg ฿${fmtTop(avg, '')}`
 
   return (
     <div>
@@ -38,23 +45,24 @@ export function TrendChart({ data = [], color = '#E31E24', suffix = '' }) {
           const x = padX + i * bw
           const y = padTop + (plotH - h)
           const isSel = i === Math.min(active, data.length - 1)
+          const isToday = i === lastIdx
+          const barColor = isToday ? TODAY_PINK : color
           const cx = x + bw / 2
           return (
             <g key={i} onClick={() => setActive(i)} style={{ cursor: 'pointer' }}>
               {/* แตะง่าย: แถบโปร่งเต็มความสูง */}
               <rect x={x} y={padTop} width={bw} height={plotH} fill="transparent" />
               <rect x={x + bw * 0.18} y={y} width={bw * 0.64} height={h || 1}
-                rx="2" fill={color} opacity={isSel ? 1 : 0.78}
-                stroke={isSel ? color : 'none'} strokeWidth={isSel ? 0 : 0} />
+                rx="2" fill={barColor} opacity={isToday || isSel ? 1 : 0.78} />
               {showLabels && (
                 <text x={cx} y={y - 3} textAnchor="middle" fontSize="7.5"
-                  fontFamily="Prompt" fill={isSel ? color : '#6B7280'} fontWeight={isSel ? 700 : 500}>
+                  fontFamily="Prompt" fill={isToday ? TODAY_PINK : (isSel ? color : '#6B7280')} fontWeight={isToday || isSel ? 700 : 500}>
                   {fmtTop(d.value, suffix)}
                 </text>
               )}
               {showLabels && (
                 <text x={cx} y={H - 9} textAnchor="middle" fontSize="8"
-                  fontFamily="Sarabun" fill={isSel ? color : '#9A9A9A'} fontWeight={isSel ? 700 : 400}>
+                  fontFamily="Sarabun" fill={isToday ? TODAY_PINK : (isSel ? color : '#9A9A9A')} fontWeight={isToday || isSel ? 700 : 400}>
                   {shortTick(d.label)}
                 </text>
               )}
@@ -62,10 +70,14 @@ export function TrendChart({ data = [], color = '#E31E24', suffix = '' }) {
           )
         })}
 
+        {/* เส้นประค่าเฉลี่ย */}
+        <line x1={padX} y1={avgY} x2={W - padX} y2={avgY} stroke="#475569" strokeWidth="1" strokeDasharray="4 3" opacity="0.85" />
+        <text x={padX + 1} y={avgY - 3} fontSize="8" fontFamily="Prompt" fontWeight="700" fill="#475569">{avgLabel}</text>
+
         {/* แท่งเยอะ → โชว์เฉพาะหัว-ท้าย */}
         {!showLabels && <>
           <text x={padX} y={H - 6} fontSize="8" fill="#9A9A9A" fontFamily="Sarabun">{data[0]?.label}</text>
-          <text x={W - padX} y={H - 6} textAnchor="end" fontSize="8" fill="#9A9A9A" fontFamily="Sarabun">{data[data.length - 1]?.label}</text>
+          <text x={W - padX} y={H - 6} textAnchor="end" fontSize="8" fill={TODAY_PINK} fontFamily="Sarabun" fontWeight="700">{data[lastIdx]?.label}</text>
         </>}
 
         <text x={W - padX} y={11} textAnchor="end" fontSize="9" fill="#555" fontFamily="Prompt">
