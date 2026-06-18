@@ -87,16 +87,26 @@ export function Calendar({ branchId = 'default' }) {
             {cells.map((d, i) => {
               if (!d) return <div key={i} className="cal-cell empty" />
               const dk = keyOf(d)
-              const data = days[dk]
+              const isFuture = dk > todayKey                       // วันอนาคต = ไม่แสดงข้อมูล (กันข้อมูลผิด)
+              const data = isFuture ? null : days[dk]
               const hasBep = data && data.bep > 0
               const cls = hasBep ? (data.hit ? 'hit' : 'miss') : ''
               const isToday = dk === todayKey
+              // %เทียบวันก่อน (จากยอดขายสุทธิ)
+              const prevData = (!isFuture && d > 1) ? days[keyOf(d - 1)] : null
+              const chg = (data && data.net > 0 && prevData && prevData.net > 0)
+                ? ((data.net - prevData.net) / prevData.net) * 100 : null
               return (
-                <button key={i} className={`cal-cell ${cls} ${sel === dk ? 'sel' : ''} ${isToday ? 'today' : ''}`}
+                <button key={i} className={`cal-cell ${cls} ${sel === dk ? 'sel' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}`}
                   onClick={() => data && setSel(dk)}>
                   <span className="cal-d">{d}</span>
                   {data && <span className="cal-mark">{hasBep ? (data.hit ? '✓' : '✗') : '·'}</span>}
-                  {data && <span className="cal-rev">{Math.round(data.net / 1000)}k</span>}
+                  {data && data.net > 0 && <span className="cal-rev">💵 {Math.round(data.net / 1000)}k</span>}
+                  {chg != null && (
+                    <span className="cal-chg" style={{ color: chg >= 0 ? '#1A7F37' : '#C0392B' }}>
+                      {chg >= 0 ? '▲' : '▼'}{Math.abs(chg).toFixed(0)}%
+                    </span>
+                  )}
                 </button>
               )
             })}

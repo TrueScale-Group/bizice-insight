@@ -504,6 +504,7 @@ html, body, #root {
 .cal-cell.hit .cal-rev { color: #1A7F37; }
 .cal-cell.miss .cal-rev { color: #C0392B; }
 .cal-rev { font-size: 8px; color: var(--txt2); font-weight: 600; }
+.cal-chg { font-size: 7.5px; font-weight: 700; line-height: 1; }
 .cal-legend { display: flex; gap: 16px; justify-content: center; margin-top: 10px; font-size: 11px; color: var(--txt2); }
 .cal-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
 .dot-green { background: var(--green); }
@@ -605,6 +606,7 @@ html, body, #root {
   .cal-d { font-size: 15px; }
   .cal-mark { font-size: 12px; }
   .cal-rev { font-size: 11px; }
+  .cal-chg { font-size: 10px; }
 }
 
 /* จอเตี้ย (มือถือแนวนอน) — ลดความสูง popup ลงอีก */
