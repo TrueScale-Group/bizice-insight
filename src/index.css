@@ -500,7 +500,10 @@ html, body, #root {
 .cal-d { font-family: 'Prompt'; font-weight: 600; font-size: 12px; }
 .cal-mark { font-size: 9px; line-height: 1; }
 .cal-cell.hit .cal-mark { color: var(--green); }
-.cal-rev { font-size: 8px; color: var(--txt3); }
+.cal-cell.miss .cal-mark { color: var(--red); }
+.cal-cell.hit .cal-rev { color: #1A7F37; }
+.cal-cell.miss .cal-rev { color: #C0392B; }
+.cal-rev { font-size: 8px; color: var(--txt2); font-weight: 600; }
 .cal-legend { display: flex; gap: 16px; justify-content: center; margin-top: 10px; font-size: 11px; color: var(--txt2); }
 .cal-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
 .dot-green { background: var(--green); }
@@ -541,7 +544,7 @@ html, body, #root {
 .dr { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .dr:last-child { border-bottom: none; }
 .dr-l { color: var(--txt2); }
-.dr-v { font-family: 'Prompt'; }
+.dr-v { font-family: 'Prompt'; color: var(--txt); }
 
 /* ════════════════════════════════════════════════
    RESPONSIVE — มือถือ (default) · Tablet · PC

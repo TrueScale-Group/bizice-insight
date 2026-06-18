@@ -5,6 +5,7 @@ import { COL } from '../constants/collections'
 import { getGrossRange, getCOGSRange } from '../utils/integrations'
 import {
   DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, thb, pctStr, defaultOpenDays, hubFoodCostDaily,
+  STATUS_COLORS, foodCostStatus,
 } from '../utils/calc'
 import { toThaiMonth, toThaiDate } from '../utils/formatDate'
 
@@ -113,13 +114,13 @@ export function Calendar({ branchId = 'default' }) {
             {toThaiDate(sel)}{sel === todayKey && <span style={{ color: 'var(--red)', fontWeight: 700 }}> · วันนี้</span>}
           </div>
           <div className="day-detail">
-            <Row label="ยอดขาย (รวม VAT)" value={thb(days[sel].gross)} />
+            <Row label="ยอดขาย (รวม VAT)" value={thb(days[sel].gross)} color="#1D4ED8" />
             <Row label="ยอดขายสุทธิ (หัก VAT)" value={thb(days[sel].net)} />
             <Row label="ต้นทุนวัตถุดิบ" value={thb(days[sel].cogs)} />
-            <Row label="กำไรขั้นต้น" value={thb(days[sel].gp)} strong />
-            <Row label="Food Cost %" value={pctStr(days[sel].fcPct)} />
+            <Row label="กำไรขั้นต้น" value={thb(days[sel].gp)} strong color={days[sel].gp < 0 ? STATUS_COLORS.red : STATUS_COLORS.green} />
+            <Row label="Food Cost %" value={pctStr(days[sel].fcPct)} strong color={days[sel].fcPct > 0 ? STATUS_COLORS[foodCostStatus(days[sel].fcPct)] : 'inherit'} />
             <Row label="BEP/วัน (รวม VAT)" value={thb(days[sel].bep)} />
-            <Row label="สถานะ" value={days[sel].hit ? '✓ ทะลุ BEP' : '✗ ไม่ทะลุ'} color={days[sel].hit ? '#1A7F37' : '#E24B4A'} />
+            <Row label="สถานะ" value={days[sel].hit ? '✓ ทะลุ BEP' : '✗ ไม่ทะลุ'} strong color={days[sel].hit ? STATUS_COLORS.green : STATUS_COLORS.red} />
           </div>
         </div>
       )}
