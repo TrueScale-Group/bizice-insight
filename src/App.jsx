@@ -49,8 +49,8 @@ export default function App() {
   const { isEditor } = useSession()
   const canEdit = isEditor()
   const { branches } = useBranches()
-  // ตั้งต้นที่สาขา 509 (key v3 รีเซ็ตค่าเก่า) · รอสาขาจริงโหลดก่อนค่อยตั้งต้น
-  const [branchId, setBranchId] = useState(() => localStorage.getItem('insight_branch_v3') || '')
+  // ตั้งต้นที่สาขา 509 (key v3 รีเซ็ตค่าเก่า) · เริ่มที่ 'default' (ห้ามว่าง — Firestore doc id) แล้วเด้งไป 509 เมื่อสาขาโหลด
+  const [branchId, setBranchId] = useState(() => localStorage.getItem('insight_branch_v3') || 'default')
   const branchPicked = useRef(!!localStorage.getItem('insight_branch_v3'))
   useEffect(() => {
     const shops = branches.filter(b => b.id !== 'default')
