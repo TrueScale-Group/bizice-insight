@@ -124,8 +124,8 @@ export function Calendar({ branchId = 'default' }) {
             {toThaiDate(sel)}{sel === todayKey && <span style={{ color: 'var(--red)', fontWeight: 700 }}> · วันนี้</span>}
           </div>
           <div className="day-detail">
-            <Row label="ยอดขาย (รวม VAT)" value={thb(days[sel].gross)} color="#1D4ED8" />
-            <Row label="ยอดขายสุทธิ (หัก VAT)" value={thb(days[sel].net)} />
+            <Row label="ยอดขาย (รวม VAT)" color="#1D4ED8"
+              value={<>{thb(days[sel].gross)} <span style={{ color: 'var(--txt3)', fontWeight: 500, fontSize: '0.82em' }}>(หัก VAT {thb(days[sel].net)})</span></>} />
             <Row label="ต้นทุนวัตถุดิบ" value={thb(days[sel].cogs)} />
             <Row label="กำไรขั้นต้น" value={thb(days[sel].gp)} strong color={days[sel].gp < 0 ? STATUS_COLORS.red : STATUS_COLORS.green} />
             <Row label="Food Cost %" value={pctStr(days[sel].fcPct)} strong color={days[sel].fcPct > 0 ? STATUS_COLORS[foodCostStatus(days[sel].fcPct)] : 'inherit'} />
