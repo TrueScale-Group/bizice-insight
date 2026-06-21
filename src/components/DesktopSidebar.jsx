@@ -1,10 +1,16 @@
 import { useSession } from '../hooks/useSession'
-import { ConnectionStatus } from './ConnectionStatus'
 
 function goHome() { window.top.location.href = 'https://truescale-group.github.io/mixue-ice-sakon/' }
+
+// Hard refresh — ล้าง cache + unregister SW แล้วโหลดใหม่ (คอนเซปเดียวกับ Inventory)
 async function hardRefresh() {
-  try { if ('caches' in window) { const k = await caches.keys(); await Promise.all(k.map(x => caches.delete(x))) } } catch {}
-  const url = new URL(window.location.href); url.searchParams.set('_r', Date.now().toString()); window.location.replace(url.toString())
+  try {
+    if ('caches' in window) { const k = await caches.keys(); await Promise.all(k.map(x => caches.delete(x))) }
+    if ('serviceWorker' in navigator) { const r = await navigator.serviceWorker.getRegistrations(); await Promise.all(r.map(x => x.unregister())) }
+  } catch (e) { console.warn('[hardRefresh]', e) }
+  finally {
+    const url = new URL(window.location.href); url.searchParams.set('_r', Date.now().toString()); window.location.replace(url.toString())
+  }
 }
 
 const NAV_ITEMS = [
@@ -17,26 +23,23 @@ const NAV_ITEMS = [
 
 export default function DesktopSidebar({ tab, onChange, branches = [], branchId, onBranch, canEdit, onEntry }) {
   const { name, role, photo, initials } = useSession()
-  const roleColor = role === 'owner' || role === 'admin' ? '#E31E24' : canEdit ? '#0284C7' : '#6B7280'
-  const roleLabel = role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : canEdit ? 'Editor' : 'Viewer'
-  const today = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+  const roleColor = role === 'owner' ? '#E31E24' : role === 'admin' ? '#7C3AED' : canEdit ? '#0284C7' : '#6B7280'
+  // role + emoji: 👑 Owner · 🛡️ Admin · ✏️ Editor · 👁️ Viewer (เหมือน Inventory)
+  const roleLabel = role === 'owner' ? '👑 Owner' : role === 'admin' ? '🛡️ Admin' : canEdit ? '✏️ Editor' : '👁️ Viewer'
 
   return (
     <aside className="desk-sidebar">
+      {/* ─── Brand ─── */}
       <div className="dsb-brand">
         <div className="dsb-brand-icon"><img src="./icon-insight.png" alt="Insight" /></div>
         <div>
           <div className="dsb-brand-name">Mixue Insight</div>
-          <div className="dsb-brand-sub">BizICE · Financial</div>
+          <div className="dsb-brand-sub">BizICE · ระบบบริหารการเงิน</div>
         </div>
       </div>
 
+      {/* ─── Scroll body ─── */}
       <div className="dsb-scroll">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 2px' }}>
-          <ConnectionStatus />
-          <button onClick={hardRefresh} title="รีเฟรช (ล้าง cache)"
-            style={{ border: 'none', background: 'var(--bg)', width: 30, height: 30, borderRadius: '50%', fontSize: 15, cursor: 'pointer', color: 'var(--txt2)' }}>🔄</button>
-        </div>
         <button className="dsb-home-btn" onClick={goHome}>🏠 กลับหน้าหลัก</button>
 
         {branches.length > 1 && (
@@ -62,17 +65,19 @@ export default function DesktopSidebar({ tab, onChange, branches = [], branchId,
         )}
       </div>
 
+      {/* ─── User footer (refresh อยู่ขวาล่าง เหมือน Inventory) ─── */}
       <div className="dsb-footer">
         <div className="dsb-avatar" style={photo
           ? { backgroundImage: `url(${photo})`, backgroundSize: 'cover', backgroundPosition: 'center' }
           : { background: roleColor }}>
           {photo ? '' : initials}
         </div>
-        <div>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div className="dsb-user-name">{name || 'ผู้ใช้งาน'}</div>
           <div className="dsb-user-role">{roleLabel}</div>
         </div>
-        <div className="dsb-date">{today}</div>
+        <button className="dsb-refresh-btn" onClick={hardRefresh}
+          title="Hard Refresh — ล้างแคชและโหลดใหม่">🔄</button>
       </div>
     </aside>
   )
