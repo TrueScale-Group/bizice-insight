@@ -1,7 +1,7 @@
 {
   "name": "bizice-insight",
   "private": true,
-  "version": "1.9.2",
+  "version": "1.9.02",
   "type": "module",
   "scripts": {
     "dev": "vite",
