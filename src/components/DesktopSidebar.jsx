@@ -42,6 +42,10 @@ export default function DesktopSidebar({ tab, onChange, branches = [], branchId,
       <div className="dsb-scroll">
         <button className="dsb-home-btn" onClick={goHome}>🏠 กลับหน้าหลัก</button>
 
+        {canEdit && (
+          <button className="dsb-entry-btn" onClick={onEntry}>✏️ กรอกข้อมูลรวม</button>
+        )}
+
         {branches.length > 1 && (
           <>
             <div className="dsb-sec-lbl">สาขา</div>
@@ -59,10 +63,6 @@ export default function DesktopSidebar({ tab, onChange, branches = [], branchId,
             </button>
           ))}
         </nav>
-
-        {canEdit && (
-          <button className="dsb-entry-btn" onClick={onEntry}>✏️ กรอกข้อมูลรวม</button>
-        )}
       </div>
 
       {/* ─── User footer (refresh อยู่ขวาล่าง เหมือน Inventory) ─── */}

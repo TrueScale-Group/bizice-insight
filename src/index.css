@@ -339,9 +339,9 @@ html, body, #root {
   text-transform: uppercase; letter-spacing: 0.07em; padding: 0 2px; margin: 14px 0 6px;
 }
 .set-entry-btn {
-  width: 100%; border: none; background: var(--red); color: #fff; cursor: pointer;
+  width: 100%; border: 1px solid #A7D9B8; background: #E7F6EC; color: #1A7F37; cursor: pointer;
   padding: 12px; border-radius: 12px; font-family: 'Prompt'; font-weight: 700; font-size: 15px;
-  margin: 10px 0 4px; box-shadow: 0 4px 12px rgba(227,30,36,.25);
+  margin: 10px 0 4px; box-shadow: 0 4px 12px rgba(26,127,55,.15);
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .set-entry-btn:active { transform: scale(.98); }
@@ -573,8 +573,8 @@ html, body, #root {
 .dsb-nav-item:hover { background: #F0EEE9; }
 .dsb-nav-item.active { background: #FFF0F0; color: var(--red); font-weight: 700; }
 .dsb-nav-ico { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
-.dsb-entry-btn { margin-top: .75rem; width: 100%; padding: .55rem .7rem; border-radius: 10px; border: none; background: var(--red); color: #fff; font-family: 'Prompt'; font-weight: 600; font-size: 12.5px; cursor: pointer; text-align: left; }
-.dsb-entry-btn:active { background: var(--red-d); }
+.dsb-entry-btn { margin: .5rem 0 .25rem; width: 100%; padding: .6rem .7rem; border-radius: 10px; border: 1px solid #A7D9B8; background: #E7F6EC; color: #1A7F37; font-family: 'Prompt'; font-weight: 700; font-size: 12.5px; cursor: pointer; text-align: left; }
+.dsb-entry-btn:active { background: #D2EEDC; }
 .dsb-footer { padding: .75rem 1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
 .dsb-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0; }
 .dsb-user-name { font-size: 12.5px; font-weight: 700; color: var(--txt); }
