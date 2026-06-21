@@ -1,4 +1,5 @@
 import { useSession } from '../hooks/useSession'
+import BranchCycle from './BranchCycle'
 
 function goHome() { window.top.location.href = 'https://truescale-group.github.io/mixue-ice-sakon/' }
 
@@ -49,9 +50,7 @@ export default function DesktopSidebar({ tab, onChange, branches = [], branchId,
         {branches.length > 1 && (
           <>
             <div className="dsb-sec-lbl">สาขา</div>
-            <select className="dsb-branch" value={branchId} onChange={e => onBranch(e.target.value)}>
-              {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+            <BranchCycle branches={branches} value={branchId} onChange={onBranch} style={{ width: '100%', justifyContent: 'flex-start' }} />
           </>
         )}
 

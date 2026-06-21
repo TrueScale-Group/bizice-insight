@@ -10,6 +10,7 @@ import { useBranches } from './hooks/useBranches'
 import { useSession } from './hooks/useSession'
 import { UpdateBanner } from './components/UpdateBanner'
 import DesktopSidebar from './components/DesktopSidebar'
+import BranchCycle from './components/BranchCycle'
 
 const HUB = 'https://truescale-group.github.io/mixue-ice-sakon/'
 
@@ -48,13 +49,17 @@ export default function App() {
   const { isEditor } = useSession()
   const canEdit = isEditor()
   const { branches } = useBranches()
-  const [branchId, setBranchId] = useState(() => localStorage.getItem('insight_branch') || 'default')
-  // ถ้า branch ที่เลือกไว้หายไป (เช่นถูกลบ) → fallback ไปสาขาแรก
+  // ตั้งต้นที่สาขา 509 (key v2 เพื่อรีเซ็ตค่าเก่าที่เคยเป็น "รวมทุกสาขา")
+  const [branchId, setBranchId] = useState(() => localStorage.getItem('insight_branch_v2') || '')
   useEffect(() => {
     if (!branches.length) return
-    if (!branches.some(b => b.id === branchId)) selectBranch(branches[0].id)
+    if (!branchId || !branches.some(b => b.id === branchId)) {
+      const shops = branches.filter(b => b.id !== 'default')
+      const b509 = shops.find(b => /509/.test(b.name) || b.code === '509') || shops[0] || branches[0]
+      selectBranch(b509.id)
+    }
   }, [branches]) // eslint-disable-line
-  const selectBranch = (id) => { setBranchId(id); localStorage.setItem('insight_branch', id) }
+  const selectBranch = (id) => { setBranchId(id); localStorage.setItem('insight_branch_v2', id) }
   const pressTimer = useRef(null)
   const tabRef = useRef(tab); useEffect(() => { tabRef.current = tab }, [tab])
   const exitRef = useRef(false); const exitTimer = useRef(null)
@@ -140,26 +145,7 @@ export default function App() {
             <img src="./icon-insight.png" alt="Insight" />
           </div>
           <div className="app-brand-name">Mixue Insight{!canEdit && <span className="view-badge">👁 ดูอย่างเดียว</span>}</div>
-          {branches.length > 1 && (
-            <select
-              className="app-brand-sub"
-              value={branchId}
-              onChange={e => selectBranch(e.target.value)}
-              aria-label="เลือกสาขา"
-              style={{
-                marginTop: 1, padding: '2px 20px 2px 7px', fontSize: 11, lineHeight: 1.3,
-                color: 'var(--txt2)', backgroundColor: 'var(--bg)',
-                border: '1px solid var(--border)', borderRadius: 6,
-                maxWidth: 160, appearance: 'none', WebkitAppearance: 'none',
-                cursor: 'pointer', outline: 'none',
-                backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 10 10\'><path d=\'M2 4l3 3 3-3\' fill=\'none\' stroke=\'%238E8E93\' stroke-width=\'1.4\'/></svg>")',
-                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 5px center',
-              }}>
-              {branches.map(b => (
-                <option key={b.id} value={b.id} style={{ color: '#111' }}>{b.name}</option>
-              ))}
-            </select>
-          )}
+          <BranchCycle branches={branches} value={branchId} onChange={selectBranch} style={{ marginTop: 2 }} />
         </div>
         <div className="app-topbar-right">
           <ConnectionStatus />
