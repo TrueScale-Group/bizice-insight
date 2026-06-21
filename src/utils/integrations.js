@@ -14,12 +14,36 @@ import { COL, MIXUE_DATA_DOC } from '../constants/collections'
 
 const num = (v) => (Number.isFinite(v) ? v : 0)
 
-// gross รายวัน (รวม VAT) จาก income_records/{dateKey}
-export async function getGrossRevenue(dateKey) {
-  const snap = await getDoc(doc(db, COL.INCOME_RECORDS, dateKey))
-  if (!snap.exists()) return 0
-  const d = snap.data()
-  return num(d.morning?.total) + num(d.afternoon?.total)
+/**
+ * รวม gross รายวันจาก docs ของ income_records โดยรองรับ Daily Income เฟส A
+ * doc id มี 2 แบบ:  "YYYY-MM-DD" (เก่า)  หรือ  "YYYY-MM-DD_<branchId>" (ใหม่)
+ *  - branchId เจาะจง  → เอาเฉพาะสาขานั้น (new) · ถ้าวันนั้นไม่มี new ใช้ old แทน
+ *  - branchId 'default' → รวมทุกสาขา (sum new ทุกสาขา) · ถ้าวันนั้นไม่มี new ใช้ old แทน
+ * คืน Map<dateKey(YYYY-MM-DD), revenue>
+ */
+export function aggregateGross(docs, branchId = 'default') {
+  const newByDate = {}, oldByDate = {}, sawNew = {}
+  docs.forEach(s => {
+    const d = s.data()
+    const rev = num(d.morning?.total) + num(d.afternoon?.total)
+    const dateStr = s.id.slice(0, 10)
+    const sfx = s.id.length > 10 ? s.id.slice(11) : null
+    if (!sfx) { oldByDate[dateStr] = rev; return }                  // old bare-date
+    if (branchId && branchId !== 'default' && sfx !== branchId) return  // คนละสาขา
+    newByDate[dateStr] = num(newByDate[dateStr]) + rev              // เจาะจง=ค่าเดียว · default=sum
+    sawNew[dateStr] = true
+  })
+  const out = {}
+  new Set([...Object.keys(oldByDate), ...Object.keys(newByDate)]).forEach(dt => {
+    out[dt] = sawNew[dt] ? newByDate[dt] : num(oldByDate[dt])
+  })
+  return out
+}
+
+// gross รายวัน (รวม VAT) — branch-aware (เฟส A)
+export async function getGrossRevenue(dateKey, branchId = 'default') {
+  const map = await getGrossRange(dateKey, dateKey, branchId)
+  return num(map[dateKey])
 }
 
 // COGS รายวัน (มูลค่าตัดสต็อก) จาก Inv_cut_logs
@@ -44,20 +68,16 @@ export async function getIngredientPrices() {
 }
 
 // ── ช่วงหลายวัน (สำหรับ trend / เฉลี่ย food cost 30 วัน) ──
-// คืน Map<dateKey, gross>
-export async function getGrossRange(fromKey, toKey) {
+// คืน Map<dateKey, gross> — branch-aware (เฟส A)
+//   ขอบบน toKey+'' เพื่อให้ครอบ doc รูปแบบใหม่ "{toKey}_<branchId>" ด้วย
+export async function getGrossRange(fromKey, toKey, branchId = 'default') {
   const q = query(
     collection(db, COL.INCOME_RECORDS),
     where(documentId(), '>=', fromKey),
-    where(documentId(), '<=', toKey),
+    where(documentId(), '<=', toKey + ''),
   )
   const snap = await getDocs(q)
-  const map = {}
-  snap.forEach(s => {
-    const d = s.data()
-    map[s.id] = num(d.morning?.total) + num(d.afternoon?.total)
-  })
-  return map
+  return aggregateGross(snap.docs, branchId)
 }
 
 // คืน Map<dateKey, cogs> (รวมทุก warehouse หรือเฉพาะที่ระบุ)

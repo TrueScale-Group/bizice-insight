@@ -10,6 +10,7 @@ import {
   laborStatus, marketingStatus, opexStatus, netProfitMonthlyStatus, foodCostPct, defaultOpenDays,
 } from '../utils/calc'
 import { toDateKey } from '../utils/formatDate'
+import { aggregateGross } from '../utils/integrations'
 
 const num = (v) => (Number.isFinite(v) ? v : 0)
 
@@ -168,14 +169,12 @@ export function useMonthlyInsight(branchId = 'default', monthKey = currentMonthK
         store.current.prevMonthly = s.exists() ? s.data() : {}; recompute()
       }, recompute),
       onSnapshot(query(collection(db, COL.INCOME_RECORDS),
-        where(documentId(), '>=', from), where(documentId(), '<=', to)), s => {
-        const mp = {}; s.forEach(d => { const x = d.data(); mp[d.id] = num(x.morning?.total) + num(x.afternoon?.total) })
-        store.current.gross = mp; recompute()
+        where(documentId(), '>=', from), where(documentId(), '<=', to + '')), s => {
+        store.current.gross = aggregateGross(s.docs, branchId); recompute()
       }, recompute),
       onSnapshot(query(collection(db, COL.INCOME_RECORDS),
-        where(documentId(), '>=', pr.from), where(documentId(), '<=', pr.to)), s => {
-        const mp = {}; s.forEach(d => { const x = d.data(); mp[d.id] = num(x.morning?.total) + num(x.afternoon?.total) })
-        store.current.prevGross = mp; recompute()
+        where(documentId(), '>=', pr.from), where(documentId(), '<=', pr.to + '')), s => {
+        store.current.prevGross = aggregateGross(s.docs, branchId); recompute()
       }, recompute),
       onSnapshot(query(collection(db, COL.CUT_STOCK_LOGS),
         where('date', '>=', from), where('date', '<=', to)), s => {

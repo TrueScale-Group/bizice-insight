@@ -8,6 +8,7 @@ import {
   DEFAULT_CONFIG, netRevenue, foodCostPct, grossProfit, bepDaily, hitBep, laborTotal, hubFoodCostStats,
 } from '../utils/calc'
 import { toDateKey, addDays, toMonthKey } from '../utils/formatDate'
+import { aggregateGross } from '../utils/integrations'
 
 const num = (v) => (Number.isFinite(v) ? v : 0)
 function prevMonthKey(mk) {
@@ -75,9 +76,8 @@ export function useInsightData(branchId = 'default') {
         setCfg(store.current.cfg); recompute()
       }, recompute),
       onSnapshot(query(collection(db, COL.INCOME_RECORDS),
-        where(documentId(), '>=', fromKey), where(documentId(), '<=', toKey)), snap => {
-        const m = {}; snap.forEach(s => { const d = s.data(); m[s.id] = num(d.morning?.total) + num(d.afternoon?.total) })
-        store.current.gross = m; recompute()
+        where(documentId(), '>=', fromKey), where(documentId(), '<=', toKey + '')), snap => {
+        store.current.gross = aggregateGross(snap.docs, branchId); recompute()
       }, recompute),
       onSnapshot(query(collection(db, COL.CUT_STOCK_LOGS),
         where('date', '>=', fromKey), where('date', '<=', toKey)), snap => {
