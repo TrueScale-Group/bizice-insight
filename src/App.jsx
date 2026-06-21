@@ -49,17 +49,24 @@ export default function App() {
   const { isEditor } = useSession()
   const canEdit = isEditor()
   const { branches } = useBranches()
-  // ตั้งต้นที่สาขา 509 (key v2 เพื่อรีเซ็ตค่าเก่าที่เคยเป็น "รวมทุกสาขา")
-  const [branchId, setBranchId] = useState(() => localStorage.getItem('insight_branch_v2') || '')
+  // ตั้งต้นที่สาขา 509 (key v3 รีเซ็ตค่าเก่า) · รอสาขาจริงโหลดก่อนค่อยตั้งต้น
+  const [branchId, setBranchId] = useState(() => localStorage.getItem('insight_branch_v3') || '')
+  const branchPicked = useRef(!!localStorage.getItem('insight_branch_v3'))
   useEffect(() => {
-    if (!branches.length) return
-    if (!branchId || !branches.some(b => b.id === branchId)) {
-      const shops = branches.filter(b => b.id !== 'default')
-      const b509 = shops.find(b => /509/.test(b.name) || b.code === '509') || shops[0] || branches[0]
+    const shops = branches.filter(b => b.id !== 'default')
+    // ยังไม่เคยเลือก + มีสาขาจริงแล้ว → ตั้งต้นที่ 509 (หรือสาขาแรก)
+    if (!branchPicked.current && shops.length) {
+      const b509 = shops.find(b => /509/.test(b.name) || b.code === '509') || shops[0]
+      branchPicked.current = true
       selectBranch(b509.id)
+      return
+    }
+    // branch ที่เลือกถูกลบ → fallback ไปสาขาแรก
+    if (branchId && branches.length && !branches.some(b => b.id === branchId)) {
+      selectBranch((shops[0] || branches[0]).id)
     }
   }, [branches]) // eslint-disable-line
-  const selectBranch = (id) => { setBranchId(id); localStorage.setItem('insight_branch_v2', id) }
+  const selectBranch = (id) => { branchPicked.current = true; setBranchId(id); localStorage.setItem('insight_branch_v3', id) }
   const pressTimer = useRef(null)
   const tabRef = useRef(tab); useEffect(() => { tabRef.current = tab }, [tab])
   const exitRef = useRef(false); const exitTimer = useRef(null)
